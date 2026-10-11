@@ -1,0 +1,43 @@
+# Applied to the repository-root build context used by both Dockerfiles.
+
+# Version control and editor/agent tooling
+.git
+.github
+.husky
+.claude
+.cursor
+.vscode
+.zed
+.agents
+
+# JavaScript / TypeScript build artifacts and dependencies
+**/node_modules
+**/.next
+**/dist
+**/coverage
+*.tsbuildinfo
+
+# Rust build artifacts
+**/target
+
+# Moon cache
+.moon/cache
+
+# Container / deployment files are mounted at runtime, not baked into images
+deploy
+compose.yaml
+compose.*.yaml
+Dockerfile
+**/Dockerfile
+.dockerignore
+
+# Documentation
+*.md
+
+# Environment files must never be copied into an image
+.env
+.env.*
+
+# Miscellaneous
+.gitignore
+skills-lock.json

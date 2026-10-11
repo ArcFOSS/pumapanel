@@ -1,0 +1,5 @@
+# TLS certificates for the optional nginx TLS server block live here.
+# Keep them out of version control.
+*
+!.gitignore
+!README.md

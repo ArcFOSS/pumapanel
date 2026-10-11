@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/ArcFOSS/pumapanel/security/advisories/new
+    about: Please report security vulnerabilities privately. Do not open a public issue.
+  - name: Documentation
+    url: https://github.com/ArcFOSS/pumapanel/blob/main/docs/README.md
+    about: Setup, architecture, and deployment questions are usually answered in the docs/ folder.

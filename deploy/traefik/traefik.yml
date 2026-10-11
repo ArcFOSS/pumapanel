@@ -1,0 +1,52 @@
+# Traefik static configuration for PumaPanel.
+#
+# Used by the optional `traefik` service in `compose.yaml` (enable it with
+# `--profile traefik`). Routing rules live in `dynamic.yml`, which is reloaded
+# automatically.
+#
+# This configuration deliberately uses the *file* provider instead of the
+# Docker/Podman provider. Routing therefore works identically on both engines
+# and never requires mounting a container-management socket.
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      # Redirect all plain HTTP traffic to HTTPS. Remove this block if TLS is
+      # terminated somewhere else (for example a load balancer in front).
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+# ACME (Let's Encrypt) certificate resolver. It must be declared in this static
+# file: Traefik does not initialize resolvers supplied only through the CLI or
+# environment variables.
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      # An email address is optional, but without it Let's Encrypt cannot warn
+      # you before certificates expire. Uncomment and set your own address.
+      # email: admin@example.com
+      storage: /letsencrypt/acme.json
+      tlsChallenge: {}
+      # Uncomment while testing to use the staging endpoint and avoid hitting
+      # production rate limits.
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+
+# The dashboard/API stays disabled. Enable only on a trusted internal address.
+api:
+  dashboard: false
+
+log:
+  level: INFO
+
+accessLog: {}

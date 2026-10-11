@@ -1,0 +1,124 @@
+# PumaPanel deployment stack.
+#
+# Services:
+#   api   - Rust API (axum), internal only on :3001
+#   web   - Next.js frontend, published on loopback :3000
+#   traefik / nginx - optional reverse proxies (mutually exclusive profiles)
+#
+# Usage:
+#   docker compose up -d --build               # web + api only
+#   docker compose --profile traefik up -d     # + Traefik on :80/:443
+#   docker compose --profile nginx   up -d     # + nginx on :80
+#
+# Enable at most one proxy profile at a time: both bind the same host ports.
+# See DEPLOYMENT.md for Docker, Podman, Traefik, and nginx instructions.
+
+name: pumapanel
+
+services:
+  api:
+    image: pumapanel/api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Bind all interfaces so the proxy network can reach the service.
+      HOST: 0.0.0.0
+      PORT: "3001"
+    expose:
+      - "3001"
+    # Defined here as well as in the Dockerfile: Podman builds OCI images by
+    # default, which drop the image-level HEALTHCHECK, while Compose-level
+    # health checks work on both engines.
+    healthcheck:
+      test:
+        ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - pumapanel
+
+  web:
+    image: pumapanel/web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    ports:
+      # Loopback only: reachable by the reverse proxy and a local browser, but
+      # not published to the network. Remove to expose solely through a proxy.
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    # See the note on the `api` service: Compose-level so it also applies to
+    # OCI images built by Podman.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - pumapanel
+
+  traefik:
+    image: traefik:v3.5
+    profiles: ["traefik"]
+    restart: unless-stopped
+    # Everything else (including the ACME resolver) is configured in
+    # deploy/traefik/traefik.yml and deploy/traefik/dynamic.yml.
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    environment:
+      # Consumed by the `{{ env "DOMAIN" }}` template in deploy/traefik/dynamic.yml.
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/traefik/traefik.yml:/etc/traefik/traefik.yml:ro,Z
+      - ./deploy/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro,Z
+      - traefik-letsencrypt:/letsencrypt
+    networks:
+      - pumapanel
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.29-alpine
+    profiles: ["nginx"]
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro,Z
+      - ./deploy/nginx/certs:/etc/nginx/certs:ro,Z
+    networks:
+      - pumapanel
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+volumes:
+  # Persists the Let's Encrypt account and issued certificates.
+  traefik-letsencrypt:
+
+networks:
+  pumapanel:
+    driver: bridge

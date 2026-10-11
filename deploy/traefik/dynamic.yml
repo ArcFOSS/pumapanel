@@ -1,0 +1,58 @@
+# Traefik dynamic configuration for PumaPanel.
+#
+# Loaded by the file provider declared in `traefik.yml`. Routers point at the
+# Compose service names (`web`, `api`) over the shared `pumapanel` network, so
+# the same file works with Docker and Podman.
+#
+# `DOMAIN` is read from the environment (supplied by the `traefik` service in
+# `compose.yaml`). The API is served under the `/api` path of the same host;
+# the prefix is stripped before the request reaches the API, so
+# `/api/health` -> `http://api:3001/health`.
+
+http:
+  routers:
+    web:
+      rule: Host(`{{ env "DOMAIN" }}`)
+      entryPoints:
+        - websecure
+      service: web
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+
+    api:
+      rule: Host(`{{ env "DOMAIN" }}`) && PathPrefix(`/api`)
+      entryPoints:
+        - websecure
+      service: api
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - strip-api-prefix
+        - security-headers
+
+  services:
+    web:
+      loadBalancer:
+        servers:
+          - url: http://web:3000
+
+    api:
+      loadBalancer:
+        servers:
+          - url: http://api:3001
+
+  middlewares:
+    strip-api-prefix:
+      stripPrefix:
+        prefixes:
+          - /api
+
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: strict-origin-when-cross-origin

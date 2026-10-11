@@ -1,0 +1,88 @@
+name: Bug report
+description: Report a reproducible problem with PumaPanel.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in as much
+        detail as you can — the more we know, the faster we can reproduce it.
+        For security issues, use a [private security advisory](https://github.com/ArcFOSS/pumapanel/security/advisories/new) instead.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checklist
+      description: Confirm you have done your homework first.
+      options:
+        - label: I have searched existing issues (including closed ones) for the same problem.
+          required: true
+        - label: I have read the relevant documentation in `docs/`.
+          required: true
+        - label: I can reproduce the problem on the latest `main`.
+          required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      description: Where does the problem occur?
+      options:
+        - Web frontend (Next.js / apps/web)
+        - API backend (Rust / apps/api)
+        - Deployment (Docker / Podman / Traefik / nginx / compose.yaml)
+        - Tooling (moon / pnpm / lint / typecheck / CI)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Commit SHA, tag, or image tag you are running.
+      placeholder: "main @ 479bbc8, or v0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear, concise description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal, exact steps to trigger the bug.
+      placeholder: |
+        1. Start the dev servers with `moon run :dev`
+        2. Open http://127.0.0.1:3000 and ...
+        3. See the error
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs and output
+      description: Paste terminal output, stack traces, or `docker compose ps` output.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, engine (Docker/Podman), and tool versions.
+      value: |
+        - OS:
+        - Node / pnpm / Rust (from `moon setup --status`):
+        - Engine: Docker or Podman (version):
+    validations:
+      required: true

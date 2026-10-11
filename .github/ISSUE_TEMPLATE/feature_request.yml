@@ -1,0 +1,60 @@
+name: Feature request
+description: Suggest a new feature or improvement for PumaPanel.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing an improvement! Before filing, check the
+        [documentation](https://github.com/ArcFOSS/pumapanel/blob/main/docs/README.md)
+        and existing issues to make sure the idea isn't already covered.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I have searched existing issues for a similar request.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the pain point or missing capability, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior or API you would like to see, including concrete examples.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Workarounds or other approaches you tried and why they fall short.
+    validations:
+      required: false
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: Which part of the project would this change?
+      options:
+        - Web frontend (Next.js)
+        - API backend (Rust)
+        - Deployment / infrastructure
+        - Tooling / CI / DX
+        - Documentation
+        - Multiple areas
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Links, screenshots, or reference implementations that help explain the request.
+    validations:
+      required: false

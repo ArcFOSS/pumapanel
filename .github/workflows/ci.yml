@@ -1,0 +1,86 @@
+# CI: lint, type-check, test, and build on every push/PR to main, and validate
+# the container stack. Uses the project's pinned toolchains (Node, pnpm, Rust)
+# through the moon/setup-toolchain action, which caches ~/.proto across runs.
+#
+# See docs/development/workflow.md for what this enforces and docs/reference/commands.md
+# for the underlying moon tasks.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, test & build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up proto + moon toolchains
+        uses: moonrepo/setup-toolchain@v0
+        with:
+          auto-install: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: moon run :lint
+
+      - name: Type-check
+        run: moon run :typecheck
+
+      - name: Test (API)
+        run: moon run api:test
+
+      - name: Build (web)
+        run: moon run web:build
+
+  containers:
+    name: Validate container stack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate Compose configuration
+        run: |
+          docker compose config --quiet
+          docker compose --profile traefik config --quiet
+          docker compose --profile nginx config --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build API image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Build web image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max

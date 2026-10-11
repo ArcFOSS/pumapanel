@@ -29,4 +29,7 @@ tasks:
     command: "pnpm lint"
 
   typecheck:
-    command: "pnpm exec tsc --noEmit"
+    # `next typegen` emits the route/`LayoutProps` declarations that `tsc`
+    # consumes, so type-checking also works on a clean checkout (CI, fresh
+    # clone) without a prior `next dev`/`next build`.
+    script: "pnpm exec next typegen && pnpm exec tsc --noEmit"
