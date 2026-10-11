@@ -1,0 +1,32 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+language: "typescript"
+layer: "application"
+tags:
+  - next
+  - frontend
+
+tasks:
+  dev:
+    command: "pnpm dev"
+    preset: "server"
+
+  build:
+    command: "pnpm build"
+    inputs:
+      - "src/**/*"
+      - "public/**/*"
+      - "package.json"
+      - "components.json"
+      - "next.config.*"
+      - "tsconfig.json"
+
+  start:
+    command: "pnpm start"
+    preset: "server"
+
+  lint:
+    command: "pnpm lint"
+
+  typecheck:
+    command: "pnpm exec tsc --noEmit"

@@ -1,0 +1,24 @@
+{
+  "name": "pumapanel",
+  "private": true,
+  "scripts": {
+    "dev": "moon run :dev",
+    "build": "moon run :build",
+    "test": "moon run :test",
+    "lint": "moon run :lint",
+    "typecheck": "moon run :typecheck",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "format": "ultracite fix",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@moonrepo/cli": "latest",
+    "@pumapanel/lint": "workspace:*",
+    "husky": "^9.1.7",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "ultracite": "^7.12.4"
+  },
+  "packageManager": "pnpm@12.12.0"
+}

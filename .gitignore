@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Moon
+.moon/cache/
+
+# Build output
+dist/
+build/
+out/
+target/
+*.tsbuildinfo
+next-env.d.ts
+
+# Next.js
+.next/
+
+# Testing
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Deployment
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

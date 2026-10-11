@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": "pnpm run fix --hook",
+        "type": "command"
+      }
+    ]
+  },
+  "version": 1
+}
