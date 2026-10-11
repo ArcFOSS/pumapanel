@@ -13,7 +13,8 @@ All commands are run from the repository root. Toolchain commands resolve throug
 
 | Command                 | Purpose                                           |
 | ----------------------- | ------------------------------------------------- |
-| `moon run :dev`         | Start both dev servers (web `:3000`, api `:3001`) |
+| `moon run dev`          | Start both dev servers (web `:3000`, api `:3001`) |
+| `moon run :dev`         | Same, via the all-projects scope                  |
 | `moon run web:dev`      | Next.js dev server only                           |
 | `moon run api:dev`      | `cargo run` only                                  |
 | `pnpm --filter web dev` | Same as `web:dev` without moon                    |

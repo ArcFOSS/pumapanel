@@ -1,0 +1,15 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+# Workspace-root project: provides convenience tasks that orchestrate the
+# individual projects. Tasks here are addressed without a project prefix, e.g.
+# `moon run dev`.
+tasks:
+  dev:
+    # Depends on the per-project dev servers instead of shelling out to a
+    # nested `moon run`, so that `moon run dev` and `moon run :dev` share the
+    # same action graph (no duplicate servers).
+    deps:
+      - "web:dev"
+      - "api:dev"
+    options:
+      persistent: true

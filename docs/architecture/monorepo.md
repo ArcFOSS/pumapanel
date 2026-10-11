@@ -25,14 +25,17 @@ packages:
 
 ## moon projects
 
-`.moon/workspace.yml` registers two projects:
+`.moon/workspace.yml` registers the two application projects plus a workspace-root project:
 
 | Project | Directory  | Language                 |
 | ------- | ---------- | ------------------------ |
+| `root`  | `.`        | — (orchestration only)   |
 | `web`   | `apps/web` | TypeScript (application) |
 | `api`   | `apps/api` | Rust (application)       |
 
-Each project declares its tasks in its own `moon.yml`:
+`workspace.yml` also sets `defaultProject: "root"`, so runnable root tasks can be addressed without a project prefix — `moon run dev` resolves to `root:dev`. The root `moon.yml` defines `dev` as a dependency-only aggregator over `web:dev` and `api:dev`; because it _depends on_ those tasks instead of shelling out to a nested `moon run`, both `moon run dev` and `moon run :dev` share one action graph and never start a server twice.
+
+Each application project declares its tasks in its own `moon.yml`:
 
 | Task        | `web`                          | `api`                         |
 | ----------- | ------------------------------ | ----------------------------- |

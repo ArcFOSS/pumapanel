@@ -22,7 +22,7 @@ Toolchain versions (Node 24, pnpm 12, Rust 1.99) are pinned in `.moon/toolchains
 ```bash
 moon setup        # install toolchains (run once after cloning)
 pnpm install      # install JS/TS dependencies
-moon run :dev     # start all dev servers (web :3000, api :3001)
+moon run dev      # start all dev servers (web :3000, api :3001)
 ```
 
 See `docs/development/setup.md` for troubleshooting and details.

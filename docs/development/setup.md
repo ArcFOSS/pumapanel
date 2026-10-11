@@ -23,7 +23,7 @@ pnpm install      # install JS/TS workspace dependencies
 ## Run the dev servers
 
 ```bash
-moon run :dev
+moon run dev
 ```
 
 This starts, in parallel:
@@ -34,6 +34,8 @@ This starts, in parallel:
 | `api`   | http://127.0.0.1:3001 (axum, `GET /health`) |
 
 Run one at a time with `moon run web:dev` or `moon run api:dev`.
+
+`moon run dev` is shorthand for the root aggregator task, which depends on both `web:dev` and `api:dev`. `moon run :dev` (the all-projects scope) runs the same action graph, so either spelling starts each server exactly once.
 
 The web app does not proxy `/api/*` in dev yet, so hit the API directly: `curl http://127.0.0.1:3001/health` → `{"status":"ok"}`.
 

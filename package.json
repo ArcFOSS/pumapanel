@@ -2,7 +2,7 @@
   "name": "pumapanel",
   "private": true,
   "scripts": {
-    "dev": "moon run :dev",
+    "dev": "moon run dev",
     "build": "moon run :build",
     "test": "moon run :test",
     "lint": "moon run :lint",

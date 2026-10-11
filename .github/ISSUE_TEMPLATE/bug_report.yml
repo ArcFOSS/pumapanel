@@ -62,7 +62,7 @@ body:
       label: Steps to reproduce
       description: Minimal, exact steps to trigger the bug.
       placeholder: |
-        1. Start the dev servers with `moon run :dev`
+        1. Start the dev servers with `moon run dev`
         2. Open http://127.0.0.1:3000 and ...
         3. See the error
     validations:
