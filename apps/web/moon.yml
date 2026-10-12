@@ -28,6 +28,16 @@ tasks:
   lint:
     command: "pnpm lint"
 
+  test:
+    command: "pnpm test"
+    inputs:
+      - "src/**/*"
+      - "public/**/*"
+      - "package.json"
+      - "tsconfig.json"
+      - "vitest.config.*"
+      - "vitest.setup.ts"
+
   typecheck:
     # `next typegen` emits the route/`LayoutProps` declarations that `tsc`
     # consumes, so type-checking also works on a clean checkout (CI, fresh

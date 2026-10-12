@@ -9,7 +9,7 @@ PumaPanel ships as two OCI images built from the repository root:
 
 Both images run as an unprivileged user, expose Docker health checks, and shut down gracefully on `SIGTERM`. Everything is driven by `compose.yaml`, which works with Docker and Podman.
 
-- `api` binds `0.0.0.0:3001` inside the container and serves `GET /health`.
+- `api` binds `0.0.0.0:3001` inside the container and serves `GET /health` plus the `/auth/*` email/password endpoints (registration, login, logout, session).
 - `web` is the public entry point. `api` is intentionally **not** published to the host; reach it through the container network or a reverse proxy.
 
 ## Prerequisites
@@ -31,8 +31,11 @@ cp .env.example .env
 | `HTTP_PORT` | `80` | Host port for the proxy's HTTP entrypoint. |
 | `HTTPS_PORT` | `443` | Host port for Traefik's HTTPS entrypoint. |
 | `WEB_PORT` | `3000` | Loopback port for direct access to the web app when no proxy runs. |
+| `JWT_SECRET` | — | **Required.** Signing key for session JWTs (≥32 chars). Generate with `openssl rand -base64 48`. |
+| `JWT_EXPIRATION_SECS` | `86400` | Session token/cookie lifetime in seconds. |
+| `COOKIE_SECURE` | `false` | Set to `true` when served over HTTPS (Traefik, or TLS upstream of nginx) so the session cookie gets the `Secure` attribute. |
 
-`.env` is git-ignored. The ACME (Let's Encrypt) resolver — including the optional contact email and the staging endpoint switch — is configured in `deploy/traefik/traefik.yml`, because Traefik cannot read that value from the environment.
+`.env` is git-ignored. The API refuses to start when `APP_ENV=production` (the Compose default) and `JWT_SECRET` is missing or too short, so `docker compose up` will not come up until you set it. The ACME (Let's Encrypt) resolver — including the optional contact email and the staging endpoint switch — is configured in `deploy/traefik/traefik.yml`, because Traefik cannot read that value from the environment.
 
 ## Docker
 
@@ -113,7 +116,11 @@ nginx listens on `HTTP_PORT` (default `80`) and proxies to the same two services
 
 ## Persistent storage
 
-The stack is otherwise stateless. The only volume is `traefik-letsencrypt`, which stores the ACME account and issued certificates at `/letsencrypt/acme.json`. Back it up if you want to avoid re-issuing certificates, and remove it with `docker compose down -v`.
+User accounts are stored in SQLite on the named volume `api-data` (mounted at `/app/data`), so they survive image rebuilds. Migrations are embedded in the API binary and applied automatically on start-up.
+
+The TLS stack keeps its own volume: `traefik-letsencrypt` stores the ACME account and issued certificates at `/letsencrypt/acme.json`. Back it up if you want to avoid re-issuing certificates.
+
+`docker compose down` keeps both volumes; `docker compose down -v` deletes them (removing accounts and certificates).
 
 ## Health, logs, and lifecycle
 

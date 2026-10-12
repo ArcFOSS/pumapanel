@@ -26,6 +26,19 @@ services:
       # Bind all interfaces so the proxy network can reach the service.
       HOST: 0.0.0.0
       PORT: "3001"
+      DATABASE_URL: sqlite:///app/data/pumapanel.db
+      # Production mode rejects a missing/weak JWT_SECRET at startup instead of
+      # falling back to an insecure default. Generate one with:
+      #   openssl rand -base64 48
+      APP_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_EXPIRATION_SECS: ${JWT_EXPIRATION_SECS:-86400}
+      # Set COOKIE_SECURE=true in `.env` when serving over HTTPS (Traefik
+      # profile, or TLS terminated upstream of nginx). The default is HTTP.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    volumes:
+      # Persists registered accounts across container restarts.
+      - api-data:/app/data
     expose:
       - "3001"
     # Defined here as well as in the Dockerfile: Podman builds OCI images by
@@ -46,6 +59,11 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        # The Next.js server proxies browser requests for `/api/*` to this
+        # address. Compose service DNS makes the backend reachable without a
+        # published port, so the no-proxy stack still works.
+        API_URL: http://api:3001
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -118,6 +136,8 @@ services:
 volumes:
   # Persists the Let's Encrypt account and issued certificates.
   traefik-letsencrypt:
+  # Persists the SQLite database (registered accounts).
+  api-data:
 
 networks:
   pumapanel:

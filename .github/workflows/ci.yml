@@ -48,6 +48,9 @@ jobs:
       - name: Test (API)
         run: moon run api:test
 
+      - name: Test (web)
+        run: moon run web:test
+
       - name: Build (web)
         run: moon run web:build
 

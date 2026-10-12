@@ -35,6 +35,7 @@ All commands are run from the repository root. Toolchain commands resolve throug
 | `moon run :lint` | Oxlint (web) + `cargo clippy -D warnings` (api) |
 | `moon run :typecheck` | `next typegen && tsc --noEmit` (web) + `cargo check` (api) |
 | `moon run api:test` | `cargo test` |
+| `moon run web:test` | `vitest run` |
 | `pnpm check` | `ultracite check` over the JS/TS workspace |
 | `pnpm fix` | `ultracite fix` (auto-format + auto-fix lint) |
 | `pnpm exec ultracite doctor` | Diagnose Ultracite/Oxlint/Oxfmt setup |
@@ -64,6 +65,7 @@ Swap `docker` for `podman` where applicable.
 | --- | --- |
 | `curl -fsS http://127.0.0.1:3001/health` | API health (`{"status":"ok"}`) |
 | `curl -fsSI http://127.0.0.1:3000/` | Web HTTP status |
+| `curl -fsS http://127.0.0.1:3000/api/auth/me` | Session check through the web origin (`401` when signed out) |
 | `nginx -t` (see [operations](../deployment/operations.md)) | nginx config syntax |
 
 ## CI/CD

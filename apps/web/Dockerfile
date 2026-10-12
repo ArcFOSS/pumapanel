@@ -25,6 +25,13 @@ COPY apps/web/package.json apps/web/
 COPY packages/lint/package.json packages/lint/
 RUN pnpm install --frozen-lockfile
 
+# Internal backend URL that the Next.js server proxies `/api/*` requests to.
+# `rewrites()` are compiled into the standalone output, so this must be set at
+# build time. Compose passes the `api` service DNS name; the default suits
+# running the image next to a local backend.
+ARG API_URL=http://127.0.0.1:3001
+ENV API_URL=${API_URL}
+
 COPY . .
 RUN pnpm --filter web build
 

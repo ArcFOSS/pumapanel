@@ -40,7 +40,7 @@ Behind a proxy the `/api/*` prefix is stripped, so `/api/health` reaches the API
 ## Design decisions
 
 - **One repo, two apps.** The frontend and backend live in `apps/` and share a root workspace, so a single `git` history and one CI pipeline cover the whole product. See [Monorepo and toolchain](./monorepo.md).
-- **Separation of concerns.** The API only exposes `/health` today; the route table and the `HOST`/`PORT` environment handling are designed to grow without reworking the container setup.
+- **Separation of concerns.** The API owns the health probe and the `/auth/*` email/password endpoints, and persists accounts in SQLite; the route table and the `HOST`/`PORT` environment handling are designed to grow without reworking the container setup. See [API architecture](./api.md).
 - **Proxy-optional.** The stack runs without a proxy (`web` is reachable directly on the loopback), but ships with two ready-made proxy profiles that do not conflict with each other. See [Deployment](../deployment/README.md).
 - **Containers are the deployable unit.** Both apps build into slim, non-root OCI images; health checks are declared in both the Dockerfiles and `compose.yaml` so Docker _and_ Podman honor them. See [Deployment architecture](../deployment/architecture.md).
 - **Pinned toolchains.** Node, pnpm, and Rust versions are pinned in `.moon/toolchains.yml` and enforced everywhere (local, CI, containers) via proto/moon. See [Monorepo and toolchain](./monorepo.md).

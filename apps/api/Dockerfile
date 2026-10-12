@@ -20,6 +20,10 @@ RUN mkdir -p src \
     && rm -rf src
 
 COPY apps/api/src ./src
+# Migrations are embedded at compile time by `sqlx::migrate!`, so they must be
+# present when the real build runs (the dependency-cache build above uses a
+# stub `main.rs` that does not reference them).
+COPY apps/api/migrations ./migrations
 RUN touch src/main.rs && cargo build --release --locked
 
 # --- Runtime -----------------------------------------------------------------
@@ -32,6 +36,11 @@ RUN apt-get update \
 RUN groupadd --gid 10001 app \
     && useradd --uid 10001 --gid app --home-dir /app --shell /usr/sbin/nologin app
 
+# Writable directory for the SQLite database. Compose mounts a named volume
+# here; Docker/Podman initialise an empty volume with this directory's
+# ownership, so the unprivileged `app` user can write to it.
+RUN install -d -o app -g app /app/data
+
 COPY --from=builder /app/target/release/api /usr/local/bin/api
 
 WORKDIR /app
@@ -39,7 +48,8 @@ USER app
 
 # `HOST=0.0.0.0` makes the service reachable from the container network.
 ENV HOST=0.0.0.0 \
-    PORT=3001
+    PORT=3001 \
+    DATABASE_URL=sqlite:///app/data/pumapanel.db
 
 EXPOSE 3001
 

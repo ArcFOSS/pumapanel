@@ -25,7 +25,17 @@ const shadcnOverrides = {
         "func-style": "off",
         "react-doctor/only-export-components": "off",
         "react/function-component-definition": "off",
+        "sonarjs/no-wildcard-import": "off",
         "sort-keys": "off",
+      },
+    },
+    {
+      // `Label` is a thin wrapper around `<label>` that forwards every prop,
+      // including `htmlFor`. The association with a control is only visible at
+      // the call site, which the rule cannot see from here.
+      files: ["**/components/ui/label.tsx"],
+      rules: {
+        "jsx-a11y/label-has-associated-control": "off",
       },
     },
   ],
