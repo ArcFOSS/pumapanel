@@ -8,3 +8,11 @@ projects:
 # Allows workspace-level tasks (see the root `moon.yml`) to be addressed
 # without a project prefix, e.g. `moon run dev`.
 defaultProject: "root"
+
+# moon defaults `defaultBranch` to `master`, but this repository uses `main`.
+# Without this, a push to `main` fails because moon cannot resolve its VCS base
+# revision (`fatal: ambiguous argument 'master'`). Pull-request runs use the PR
+# base/head SHAs instead, which is why only post-merge runs were affected.
+vcs:
+  defaultBranch: "main"
+  provider: "github"
