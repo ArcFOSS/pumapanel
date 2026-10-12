@@ -9,7 +9,7 @@ PumaPanel ships as two OCI images built from the repository root:
 
 Both images run as an unprivileged user, expose Docker health checks, and shut down gracefully on `SIGTERM`. Everything is driven by `compose.yaml`, which works with Docker and Podman.
 
-- `api` binds `0.0.0.0:3001` inside the container and serves `GET /health` plus the `/auth/*` email/password endpoints (registration, login, logout, session).
+- `api` binds `0.0.0.0:3001` inside the container and serves `GET /health`, the `/auth/*` email/username/password endpoints (registration, login, logout, session), and the admin-only `/admin/users/{id}` endpoints (view and edit accounts, including roles).
 - `web` is the public entry point. `api` is intentionally **not** published to the host; reach it through the container network or a reverse proxy.
 
 ## Prerequisites

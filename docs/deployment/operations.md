@@ -21,7 +21,7 @@ docker compose --profile nginx   up -d --build
 docker compose ps                      # status + health
 docker compose logs -f web             # follow one service
 docker compose logs -f                 # follow everything
-curl -fsS http://127.0.0.1:3000/ | head   # web responds
+curl -fsS http://127.0.0.1:3000/login | head   # web responds
 curl -fsS http://127.0.0.1:3001/health     # → {"status":"ok"}
 ```
 
