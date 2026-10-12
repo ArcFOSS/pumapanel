@@ -1,3 +1,4 @@
+import { AuthStatus } from "@/components/auth-status";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ const Home = () => (
         </code>
       </p>
     </div>
+    <AuthStatus />
     <div className="flex flex-wrap items-center justify-center gap-3">
       <a
         className={cn(buttonVariants())}

@@ -1,21 +1,10 @@
-use std::env;
+use std::sync::Arc;
 
-use axum::{routing::get, Json, Router};
-use serde::Serialize;
+use api::config::Config;
+use api::db;
+use api::state::AppState;
 use tokio::net::TcpListener;
 use tokio::signal;
-
-const DEFAULT_HOST: &str = "127.0.0.1";
-const DEFAULT_PORT: &str = "3001";
-
-#[derive(Serialize)]
-struct HealthResponse {
-    status: &'static str,
-}
-
-async fn health() -> Json<HealthResponse> {
-    Json(HealthResponse { status: "ok" })
-}
 
 /// Resolves when the process receives `SIGINT` (Ctrl+C) or `SIGTERM`.
 ///
@@ -40,23 +29,29 @@ async fn shutdown_signal() {
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+        () = ctrl_c => {},
+        () = terminate => {},
     }
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let config = Config::from_env()?;
+    let pool = db::init_pool(&config.database_url).await?;
+
     // Bind to `127.0.0.1` during local development, but allow containers to
     // listen on all interfaces via `HOST=0.0.0.0`.
-    let host = env::var("HOST").unwrap_or_else(|_| DEFAULT_HOST.to_string());
-    let port = env::var("PORT").unwrap_or_else(|_| DEFAULT_PORT.to_string());
-    let addr = format!("{host}:{port}");
+    let address = format!("{}:{}", config.host, config.port);
 
-    let app = Router::new().route("/health", get(health));
-    let listener = TcpListener::bind(&addr).await?;
+    let state = AppState {
+        db: pool,
+        config: Arc::new(config),
+    };
 
-    println!("API listening on http://{addr}");
+    let app = api::app(state);
+    let listener = TcpListener::bind(&address).await?;
+
+    println!("API listening on http://{address}");
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())

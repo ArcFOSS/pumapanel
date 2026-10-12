@@ -34,7 +34,12 @@ jobs:
       - name: Set up proto + moon toolchains
         uses: moonrepo/setup-toolchain@v0
         with:
-          auto-install: true
+          # Run `moon setup`, which installs the toolchains declared in
+          # `.moon/toolchains.yml` (node, pnpm, rust) in dependency order.
+          # `auto-install` would instead run a bare `proto install`, which
+          # requires a `.prototools` file this moon workspace does not use, and
+          # fails because pnpm's node dependency is never installed.
+          auto-setup: true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -47,6 +52,9 @@ jobs:
 
       - name: Test (API)
         run: moon run api:test
+
+      - name: Test (web)
+        run: moon run web:test
 
       - name: Build (web)
         run: moon run web:build

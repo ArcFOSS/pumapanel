@@ -18,6 +18,11 @@ Where configuration lives, what the variables mean, and which defaults apply.
 | `HTTP_PORT` | `80` | Proxy profiles + `compose.yaml` | Host port for HTTP (`< 1024` needs rootful Docker or Podman workaround) |
 | `HTTPS_PORT` | `443` | Traefik profile | Host port for HTTPS |
 | `WEB_PORT` | `3000` | `web` service | Loopback port for direct access |
+| `JWT_SECRET` | — | `api` service | Signing key for session JWTs. **Required** in production, ≥32 chars. Generate with `openssl rand -base64 48` |
+| `JWT_EXPIRATION_SECS` | `86400` | `api` service | Token/cookie lifetime in seconds |
+| `COOKIE_SECURE` | `false` in Compose | `api` service | Adds `Secure` to the session cookie. Set `true` when served over HTTPS (Traefik or TLS upstream of nginx) |
+
+> The API validates `JWT_SECRET` at startup. With `APP_ENV=production` (the Compose default) and no secret it exits with a clear error instead of falling back to an insecure value, so `docker compose up` **requires** `JWT_SECRET` in `.env`.
 
 ## Runtime environment variables (containers)
 
@@ -25,9 +30,17 @@ Where configuration lives, what the variables mean, and which defaults apply.
 | --- | --- | --- | --- |
 | `api` | `HOST` | `0.0.0.0` | Bind in the container (local default: `127.0.0.1`) |
 | `api` | `PORT` | `3001` | Listen port |
+| `api` | `APP_ENV` | `production` | Enables production config rules (e.g. required `JWT_SECRET`) |
+| `api` | `DATABASE_URL` | `sqlite:///app/data/pumapanel.db` | SQLite database on the `api-data` volume |
 | `web` | `NODE_ENV` | `production` | Next.js production mode |
 | `web` | `HOSTNAME` | `0.0.0.0` | Next standalone server bind address |
 | `web` | `PORT` | `3000` | Next standalone server port |
+
+`API_URL` is a **build-time** argument for the `web` image (default `http://127.0.0.1:3001`); Compose passes `http://api:3001` so the `/api/*` rewrite reaches the API over the Compose network. See [Web architecture](../architecture/web.md).
+
+## Persistence
+
+The API stores accounts in SQLite. `compose.yaml` mounts the named volume `api-data` at `/app/data`, so users survive image rebuilds. Migrations are embedded in the binary and applied automatically on startup. Remove the database with `docker compose down -v`.
 
 ## Compose (`compose.yaml`)
 

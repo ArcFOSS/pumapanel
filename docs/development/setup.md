@@ -28,16 +28,16 @@ moon run dev
 
 This starts, in parallel:
 
-| Service | URL                                         |
-| ------- | ------------------------------------------- |
-| `web`   | http://127.0.0.1:3000 (Next dev server)     |
-| `api`   | http://127.0.0.1:3001 (axum, `GET /health`) |
+| Service | URL                                                 |
+| ------- | --------------------------------------------------- |
+| `web`   | http://127.0.0.1:3000 (Next dev server)             |
+| `api`   | http://127.0.0.1:3001 (axum, `/health` + `/auth/*`) |
 
 Run one at a time with `moon run web:dev` or `moon run api:dev`.
 
 `moon run dev` is shorthand for the root aggregator task, which depends on both `web:dev` and `api:dev`. `moon run :dev` (the all-projects scope) runs the same action graph, so either spelling starts each server exactly once.
 
-The web app does not proxy `/api/*` in dev yet, so hit the API directly: `curl http://127.0.0.1:3001/health` → `{"status":"ok"}`.
+In dev the web app rewrites `/api/*` to the API (default `http://127.0.0.1:3001`), so the browser uses the same origin and the session cookie stays same-origin: open http://127.0.0.1:3000/register to create an account, or hit the API directly at `http://127.0.0.1:3001/health`.
 
 ## Editor setup
 

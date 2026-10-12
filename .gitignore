@@ -19,6 +19,11 @@ next-env.d.ts
 # Testing
 coverage/
 
+# SQLite databases (local development and tests)
+*.db
+*.db-shm
+*.db-wal
+
 # Environment files
 .env
 .env.*

@@ -35,14 +35,22 @@ docker compose ps                      # confirm web+api are (healthy)
 
 ## Backups
 
-The stack is otherwise stateless. The only persistent data is the Let's Encrypt volume:
+Persistent data lives in two named volumes:
+
+- `pumapanel_api-data` — the SQLite database holding user accounts.
+- `pumapanel_traefik-letsencrypt` — the ACME account and issued certificates.
 
 ```bash
+# Accounts
+docker run --rm -v pumapanel_api-data:/data -v "$PWD":/backup \
+  alpine tar czf /backup/api-data-$(date +%F).tar.gz -C /data .
+
+# Certificates
 docker run --rm -v pumapanel_traefik-letsencrypt:/data -v "$PWD":/backup \
   alpine tar czf /backup/letsencrypt-$(date +%F).tar.gz -C /data .
 ```
 
-(Check the exact volume name with `docker volume ls` — Compose prefixes it with the project name.) Restore by replacing the contents of that volume and recreating the Traefik service.
+(Check the exact volume names with `docker volume ls` — Compose prefixes them with the project name.) Restore by replacing the contents of the relevant volume and recreating the service.
 
 ## Recover / roll back
 

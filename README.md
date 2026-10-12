@@ -18,6 +18,7 @@ PumaPanel is a monorepo that demonstrates and standardizes a modern full-stack s
 
 - **Next.js 16** app router frontend with React Compiler, standalone output, and Tailwind CSS v4
 - **Rust API** built with axum + tokio — graceful shutdown, `HOST`/`PORT` config
+- **Email/password authentication**: Argon2id hashing, JWT sessions in an HttpOnly cookie, SQLite persistence via sqlx
 - **Containerized from day one**: slim, non-root OCI images with health checks
 - **Docker _and_ Podman** via the same `compose.yaml`
 - **Traefik** (automatic Let's Encrypt TLS) or **nginx** as mutually-exclusive proxy profiles
@@ -47,13 +48,14 @@ pnpm install      # install JS/TS dependencies
 moon run dev      # start all dev servers (web :3000, api :3001)
 ```
 
-Open http://127.0.0.1:3000 for the web app. The API doesn't run behind a dev proxy yet (see `docs/architecture/web.md`), so reach it directly at http://127.0.0.1:3001/health.
+Open http://127.0.0.1:3000 for the web app — it proxies `/api/*` to the API, so registration, login, and the session cookie all work same-origin. The API is also reachable directly at http://127.0.0.1:3001 (`/health` and `/auth/*`). See `docs/architecture/web.md`.
 
 ## Common tasks
 
 ```bash
 moon run web:build      # build the frontend
 moon run api:test       # test the backend
+moon run web:test       # test the frontend
 moon run :lint          # lint every project
 moon run :typecheck     # type-check every project
 pnpm check              # lint + format check (Ultracite)
@@ -65,7 +67,7 @@ pnpm fix                # auto-fix lint + format issues
 Build and run the whole stack with Docker or Podman:
 
 ```bash
-cp .env.example .env
+cp .env.example .env                            # set JWT_SECRET (openssl rand -base64 48)
 docker compose up -d --build                    # web + api only
 docker compose --profile traefik up -d          # + Traefik on :80/:443
 docker compose --profile nginx up -d            # + nginx on :80
