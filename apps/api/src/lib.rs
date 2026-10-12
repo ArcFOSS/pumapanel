@@ -1,3 +1,4 @@
+pub mod admin;
 pub mod auth;
 pub mod config;
 pub mod db;
@@ -28,5 +29,6 @@ pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
         .merge(auth::router())
+        .merge(admin::router())
         .with_state(state)
 }

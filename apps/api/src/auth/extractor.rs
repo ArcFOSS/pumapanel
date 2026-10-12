@@ -36,6 +36,30 @@ impl FromRequestParts<AppState> for AuthUser {
     }
 }
 
+/// Extractor that resolves an authenticated **admin** [`User`].
+///
+/// The role is read from the database on every request — the token only
+/// identifies the account — so a role change takes effect immediately for
+/// existing sessions. Authenticated non-admin users are rejected with `403`
+/// regardless of which resource they target, so admin routes leak nothing to
+/// unauthorized callers.
+pub struct AdminUser(pub User);
+
+impl FromRequestParts<AppState> for AdminUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let AuthUser(user) = AuthUser::from_request_parts(parts, state).await?;
+        if !user.role.is_admin() {
+            return Err(ApiError::Forbidden);
+        }
+        Ok(Self(user))
+    }
+}
+
 fn extract_token(parts: &Parts, cookie_name: &str) -> Option<String> {
     if let Some(token) = parts
         .headers

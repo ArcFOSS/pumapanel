@@ -25,6 +25,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "cookie",
+ "dotenvy",
  "jsonwebtoken",
  "rayon",
  "serde",

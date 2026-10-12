@@ -11,7 +11,7 @@ use axum::{Json, Router};
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use cookie::time::Duration as CookieDuration;
 use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationErrors};
+use validator::{Validate, ValidationError, ValidationErrors};
 
 use crate::config::Config;
 use crate::error::{ApiError, FieldError};
@@ -35,13 +35,15 @@ pub fn router() -> Router<AppState> {
 
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
+    pub username: String,
     pub email: String,
     pub password: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {
-    pub email: String,
+    /// An email address or a username.
+    pub identifier: String,
     pub password: String,
 }
 
@@ -52,6 +54,18 @@ pub struct AuthResponse {
 
 #[derive(Debug, Validate)]
 struct RegisterForm {
+    #[validate(
+        length(
+            min = 3,
+            max = 30,
+            message = "Username must be between 3 and 30 characters"
+        ),
+        custom(
+            function = "validate_username_chars",
+            message = "Username may only contain letters, numbers, and underscores"
+        )
+    )]
+    username: String,
     #[validate(email(message = "Enter a valid email address"))]
     email: String,
     #[validate(length(
@@ -64,10 +78,26 @@ struct RegisterForm {
 
 #[derive(Debug, Validate)]
 struct LoginForm {
-    #[validate(email(message = "Enter a valid email address"))]
-    email: String,
+    #[validate(length(
+        min = 1,
+        max = 320,
+        message = "Enter your email or username"
+    ))]
+    identifier: String,
     #[validate(length(min = 1, max = 128, message = "Password is required"))]
     password: String,
+}
+
+/// Restricts usernames to letters, digits, and underscores. Input is
+/// normalized to lowercase before validation, so this also decides the stored
+/// form. The same policy is enforced when an admin edits a username
+/// (`[crate::admin]`).
+fn validate_username_chars(username: &str) -> Result<(), ValidationError> {
+    if users::has_valid_username_chars(username) {
+        Ok(())
+    } else {
+        Err(ValidationError::new("username_chars"))
+    }
 }
 
 /// Creates an account, persists it, and signs the new user in immediately by
@@ -78,6 +108,7 @@ async fn register(
     Json(payload): Json<RegisterRequest>,
 ) -> Result<(StatusCode, CookieJar, Json<AuthResponse>), ApiError> {
     let form = RegisterForm {
+        username: users::normalize_username(&payload.username),
         email: users::normalize_email(&payload.email),
         password: payload.password,
     };
@@ -86,14 +117,12 @@ async fn register(
     let password_hash = password::hash_password(&form.password)
         .map_err(|error| ApiError::internal(format!("failed to hash password: {error}")))?;
 
-    let user = match users::create(&state.db, &form.email, &password_hash).await {
+    let user = match users::create(&state.db, &form.username, &form.email, &password_hash).await {
+        // The UNIQUE constraints are the authority, so concurrent registration
+        // attempts cannot produce duplicate accounts. The offending column is
+        // named in the SQLite error, which distinguishes the two conflicts.
         Ok(user) => user,
-        // The UNIQUE constraint is the authority, so concurrent registration
-        // attempts cannot produce duplicate accounts.
-        Err(sqlx::Error::Database(error)) if error.is_unique_violation() => {
-            return Err(ApiError::EmailTaken);
-        }
-        Err(error) => return Err(ApiError::from(error)),
+        Err(error) => return Err(ApiError::from_user_conflict(error)),
     };
 
     let token = jwt::issue_token(&state.config, &user.id)?;
@@ -113,12 +142,12 @@ async fn login(
     Json(payload): Json<LoginRequest>,
 ) -> Result<(CookieJar, Json<AuthResponse>), ApiError> {
     let form = LoginForm {
-        email: users::normalize_email(&payload.email),
+        identifier: users::normalize_identifier(&payload.identifier),
         password: payload.password,
     };
     form.validate().map_err(validation_error)?;
 
-    let user = match users::find_by_email(&state.db, &form.email).await? {
+    let user = match users::find_by_identifier(&state.db, &form.identifier).await? {
         Some(user) if password::verify_password(&form.password, &user.password_hash) => user,
         Some(_) => return Err(ApiError::InvalidCredentials),
         None => {

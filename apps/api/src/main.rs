@@ -36,6 +36,12 @@ async fn shutdown_signal() {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Load a `.env` file for local development. This is a no-op when the file
+    // is absent (for example inside a container, where configuration is
+    // injected through the environment), and never overrides variables that are
+    // already set.
+    let _ = dotenvy::dotenv();
+
     let config = Config::from_env()?;
     let pool = db::init_pool(&config.database_url).await?;
 
