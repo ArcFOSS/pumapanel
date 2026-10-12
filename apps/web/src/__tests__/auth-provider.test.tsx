@@ -51,7 +51,7 @@ describe("AuthProvider", () => {
     });
 
     await act(async () => {
-      await result.current.login("user@example.com", "password123");
+      await result.current.login("testuser", "password123");
     });
 
     expect(result.current.status).toBe("authenticated");
