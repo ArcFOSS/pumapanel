@@ -20,6 +20,27 @@ pnpm install      # install JS/TS workspace dependencies
 
 > If `moon`/`pnpm` are not on your `PATH` yet, follow the quick install instructions at <https://moonrepo.dev> and <https://pnpm.io>.
 
+## Local configuration (`.env`)
+
+The API loads a `.env` file at startup via [`dotenvy`](https://crates.io/crates/dotenvy), searching the current directory and its parents — so a single file at the repository root configures both `moon run api:dev` and Docker Compose. Existing environment variables always win; the file is git-ignored.
+
+```bash
+cp .env.example .env
+openssl rand -base64 48   # paste the output into JWT_SECRET
+```
+
+For local development set:
+
+```dotenv
+JWT_SECRET=<the generated value>
+JWT_EXPIRATION_SECS=86400
+COOKIE_SECURE=false          # local dev is plain HTTP
+DATABASE_URL=sqlite://pumapanel.db
+API_URL=http://127.0.0.1:3001
+```
+
+`DATABASE_URL` points at a SQLite file created next to the API crate on first run; the embedded migrations run automatically at startup, so there is no separate migrate step. See [Configuration reference](../reference/configuration.md) for every variable.
+
 ## Run the dev servers
 
 ```bash
@@ -37,7 +58,7 @@ Run one at a time with `moon run web:dev` or `moon run api:dev`.
 
 `moon run dev` is shorthand for the root aggregator task, which depends on both `web:dev` and `api:dev`. `moon run :dev` (the all-projects scope) runs the same action graph, so either spelling starts each server exactly once.
 
-In dev the web app rewrites `/api/*` to the API (default `http://127.0.0.1:3001`), so the browser uses the same origin and the session cookie stays same-origin: open http://127.0.0.1:3000/register to create an account, or hit the API directly at `http://127.0.0.1:3001/health`.
+In dev the web app rewrites `/api/*` to the API (default `http://127.0.0.1:3001`), so the browser uses the same origin and the session cookie stays same-origin: open http://127.0.0.1:3000/register to create an account (you land on the session-guarded `/dashboard`), or hit the API directly at `http://127.0.0.1:3001/health`. The root path has no page — `/` redirects to `/dashboard` when signed in and to `/login` when signed out, and `/dashboard` itself redirects to `/login` while signed out.
 
 ## Editor setup
 

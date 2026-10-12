@@ -26,8 +26,14 @@ pub enum ApiError {
     InvalidCredentials,
     /// 401 — missing, malformed, expired, or otherwise invalid token.
     Unauthorized,
+    /// 403 — authenticated, but the account lacks the required role.
+    Forbidden,
+    /// 404 — the requested resource does not exist.
+    NotFound,
     /// 409 — an account with this email already exists.
     EmailTaken,
+    /// 409 — an account with this username already exists.
+    UsernameTaken,
     /// 500 — unexpected server-side failure.
     Internal(String),
 }
@@ -35,6 +41,23 @@ pub enum ApiError {
 impl ApiError {
     pub fn internal(detail: impl Into<String>) -> Self {
         Self::Internal(detail.into())
+    }
+
+    /// Maps a unique-constraint violation into the `taken` error for the
+    /// offending column; any other database error becomes `Internal`.
+    ///
+    /// Shared by registration and admin edits, since both write to `users`.
+    pub fn from_user_conflict(error: sqlx::Error) -> Self {
+        match error {
+            sqlx::Error::Database(db) if db.is_unique_violation() => {
+                if db.message().contains("users.username") {
+                    Self::UsernameTaken
+                } else {
+                    Self::EmailTaken
+                }
+            }
+            other => Self::from(other),
+        }
     }
 }
 
@@ -56,7 +79,7 @@ impl IntoResponse for ApiError {
             Self::InvalidCredentials => (
                 StatusCode::UNAUTHORIZED,
                 "invalid_credentials",
-                "Invalid email or password".to_string(),
+                "Invalid email, username, or password".to_string(),
                 Vec::new(),
             ),
             Self::Unauthorized => (
@@ -65,10 +88,28 @@ impl IntoResponse for ApiError {
                 "Authentication required".to_string(),
                 Vec::new(),
             ),
+            Self::Forbidden => (
+                StatusCode::FORBIDDEN,
+                "forbidden",
+                "You do not have permission to access this resource".to_string(),
+                Vec::new(),
+            ),
+            Self::NotFound => (
+                StatusCode::NOT_FOUND,
+                "not_found",
+                "Resource not found".to_string(),
+                Vec::new(),
+            ),
             Self::EmailTaken => (
                 StatusCode::CONFLICT,
                 "email_taken",
                 "An account with this email already exists".to_string(),
+                Vec::new(),
+            ),
+            Self::UsernameTaken => (
+                StatusCode::CONFLICT,
+                "username_taken",
+                "An account with this username already exists".to_string(),
                 Vec::new(),
             ),
             Self::Internal(detail) => {

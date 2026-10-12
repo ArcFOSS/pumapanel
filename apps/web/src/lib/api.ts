@@ -1,5 +1,5 @@
 /**
- * Typed client for the backend authentication API.
+ * Typed client for the backend API.
  *
  * Requests target `/api/*` on the current origin; the Next.js server proxies
  * them to the backend (see `next.config.ts`). Because everything stays
@@ -7,9 +7,17 @@
  * configuration is required. The cookie is never read by JavaScript.
  */
 
+export type UserRole = "user" | "admin";
+
+/** Returns true when the account holds the `admin` role. */
+export const isAdminUser = (user: Pick<AuthUser, "role">): boolean =>
+  user.role === "admin";
+
 export interface AuthUser {
   id: string;
   email: string;
+  username: string;
+  role: UserRole;
   createdAt: string;
 }
 
@@ -99,15 +107,15 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   }
 
   // SAFETY: each endpoint pins its response contract at the call site; the
-  // backend returns `{ user }` for the authenticated endpoints and an empty
-  // body (parsed as `null`) for logout.
+  // backend returns `{ user }` for the authenticated and admin user endpoints
+  // and an empty body (parsed as `null`) for logout.
   return body as T;
 };
 
 export const authApi = {
-  login: (email: string, password: string) =>
+  login: (identifier: string, password: string) =>
     request<AuthResponse>("/auth/login", {
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
       method: "POST",
     }),
 
@@ -115,9 +123,30 @@ export const authApi = {
 
   me: () => request<AuthResponse>("/auth/me"),
 
-  register: (email: string, password: string) =>
+  register: (username: string, email: string, password: string) =>
     request<AuthResponse>("/auth/register", {
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, username }),
       method: "POST",
+    }),
+};
+
+/** The fields an admin may change on a user account. */
+export interface UpdateUserInput {
+  email?: string;
+  role?: UserRole;
+  username?: string;
+}
+
+/**
+ * Client for the admin user-management endpoints. Every call is authorized by
+ * the backend's `AdminUser` extractor; a non-admin session receives `403`.
+ */
+export const adminApi = {
+  getUser: (userId: string) => request<AuthResponse>(`/admin/users/${userId}`),
+
+  updateUser: (userId: string, changes: UpdateUserInput) =>
+    request<AuthResponse>(`/admin/users/${userId}`, {
+      body: JSON.stringify(changes),
+      method: "PATCH",
     }),
 };

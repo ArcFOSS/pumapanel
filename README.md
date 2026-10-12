@@ -18,7 +18,9 @@ PumaPanel is a monorepo that demonstrates and standardizes a modern full-stack s
 
 - **Next.js 16** app router frontend with React Compiler, standalone output, and Tailwind CSS v4
 - **Rust API** built with axum + tokio — graceful shutdown, `HOST`/`PORT` config
-- **Email/password authentication**: Argon2id hashing, JWT sessions in an HttpOnly cookie, SQLite persistence via sqlx
+- **Authentication**: Argon2id hashing, JWT sessions in an HttpOnly cookie, SQLite persistence via sqlx — sign in with an email **or** a username
+- **Session-guarded dashboard**: `/` routes signed-in users to `/dashboard` and everyone else to `/login`; the dashboard is only reachable with a valid session
+- **Role-based access control**: `user`/`admin` roles enforced by the API on every request, plus admin-only user management pages (view and edit profiles, promote/demote accounts) and an idempotent data migration that bootstraps an initial admin
 - **Containerized from day one**: slim, non-root OCI images with health checks
 - **Docker _and_ Podman** via the same `compose.yaml`
 - **Traefik** (automatic Let's Encrypt TLS) or **nginx** as mutually-exclusive proxy profiles
@@ -48,7 +50,7 @@ pnpm install      # install JS/TS dependencies
 moon run dev      # start all dev servers (web :3000, api :3001)
 ```
 
-Open http://127.0.0.1:3000 for the web app — it proxies `/api/*` to the API, so registration, login, and the session cookie all work same-origin. The API is also reachable directly at http://127.0.0.1:3001 (`/health` and `/auth/*`). See `docs/architecture/web.md`.
+Open http://127.0.0.1:3000 for the web app — it proxies `/api/*` to the API, so registration, login, and the session cookie all work same-origin. There is no marketing page: `/` sends signed-in visitors to `/dashboard` and everyone else to `/login`, and `/dashboard` itself redirects to `/login` while signed out. The API is also reachable directly at http://127.0.0.1:3001 (`/health`, `/auth/*`, and the admin-only `/admin/users/*`). See `docs/architecture/web.md`.
 
 ## Common tasks
 

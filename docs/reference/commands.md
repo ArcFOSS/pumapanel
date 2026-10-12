@@ -64,7 +64,7 @@ Swap `docker` for `podman` where applicable.
 | Command | Purpose |
 | --- | --- |
 | `curl -fsS http://127.0.0.1:3001/health` | API health (`{"status":"ok"}`) |
-| `curl -fsSI http://127.0.0.1:3000/` | Web HTTP status |
+| `curl -fsSI http://127.0.0.1:3000/login` | Web HTTP status (`/` redirects here when signed out) |
 | `curl -fsS http://127.0.0.1:3000/api/auth/me` | Session check through the web origin (`401` when signed out) |
 | `nginx -t` (see [operations](../deployment/operations.md)) | nginx config syntax |
 

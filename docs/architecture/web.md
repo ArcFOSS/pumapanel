@@ -1,6 +1,6 @@
 # Web App (`apps/web`)
 
-The frontend is a [Next.js](https://nextjs.org) 16 / [React](https://react.dev) 19 application using the App Router, styled with [Tailwind CSS v4](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) components. It owns the login and registration UI and reflects the current session.
+The frontend is a [Next.js](https://nextjs.org) 16 / [React](https://react.dev) 19 application using the App Router, styled with [Tailwind CSS v4](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) components. It owns the login and registration UI, an authenticated dashboard, and an admin-only user-management area, and reflects the current session and role.
 
 ## Stack
 
@@ -20,18 +20,33 @@ apps/web/
   src/
     app/
       layout.tsx             Root layout: fonts, global styles, AuthProvider
-      page.tsx               Landing page (+ session status)
+      page.tsx               Root route (redirects to /dashboard or /login)
       login/page.tsx         Sign-in page
       register/page.tsx      Registration page
+      dashboard/page.tsx     Authenticated dashboard (session-guarded)
+      admin/u/[userId]/page.tsx        Admin-only profile view
+      admin/edit/u/[userId]/page.tsx   Admin-only profile editor
       globals.css            Tailwind v4 entry + design tokens
     components/
       auth-provider.tsx      Session context: bootstrap, login, register, logout
-      auth-form.tsx          Shared email/password form (validation + errors)
-      auth-status.tsx        Landing-page session summary
+      auth-form.tsx          Shared login/registration form (validation + errors)
+      auth-shell.tsx         Split-screen layout for the auth pages
+      dashboard-view.tsx     Presentational dashboard body
+      admin-gate.tsx         Role gate for the admin pages
+      admin-user-view.tsx    Admin read-only profile display
+      admin-user-edit-form.tsx  Admin profile editor (username, email, role)
+      admin-error-card.tsx   Admin-page error/alert state
+      page-loading.tsx       Centered spinner for session-aware pages
+      site-header.tsx        Shared sticky header (session-aware)
+      logo.tsx               Wordmark
       ui/                    shadcn/ui components (button, input, label, …)
     lib/
-      api.ts                 Typed API client + `ApiError`
+      api.ts                 Typed API client + `ApiError` (auth + admin)
+      route-guard.ts         Pure access-control rules (shared with the proxy)
+      use-admin-user.ts      Loads one user via the admin API (loading/error)
+      validate.ts            Shared username/email validators (mirror the API)
       utils.ts               `cn()` helper (clsx + tailwind-merge)
+    proxy.ts                 Optimistic route protection (Next.js Proxy)
     __tests__/               Vitest suites + shared helpers
   components.json            shadcn/ui project config
   next.config.ts             Next.js configuration (incl. `/api` rewrite)
@@ -75,10 +90,23 @@ The session token lives in an HttpOnly cookie and is **never readable by JavaScr
 
 - **`AuthProvider`** (`src/components/auth-provider.tsx`) wraps the app in `layout.tsx`. On mount it calls `GET /api/auth/me`; a success sets `status: "authenticated"` with the user, and a `401` (or any failure) sets `status: "anonymous"`. The initial `"loading"` state renders identically on the server and the client, avoiding hydration mismatches. A valid session therefore survives page reloads.
 - **`useAuth()`** exposes `{ status, user, login, register, logout }`. `login`/`register` call the API and store the returned user; `logout` calls `POST /api/auth/logout` and clears the local state.
-- **`/login` and `/register`** share `AuthForm`, which owns input state, client-side validation, in-flight disabling, and error display. Both pages call `useAuth()` and redirect to `/` on success via `useRouter`; errors are shown inline (field errors) or as an alert (generic errors).
-- **`lib/api.ts`** is the single client boundary. It always sends `credentials: "same-origin"` and normalizes failures into `ApiError` (`status`, `code`, `message`, optional `fields`); network failures become `status: 0`, `code: "network_error"`.
+- **`/login` and `/register`** share `AuthForm`, which owns input state, client-side validation, in-flight disabling, and error display. Login takes an email-or-username identifier; registration also requires a username (3–30 letters, numbers, or underscores). Both pages render inside `AuthShell` (a split-screen layout) and, on success, call `useAuth()` and redirect to `/dashboard` via `useRouter`; errors are shown inline (field errors) or as an alert (generic errors).
+- **`lib/api.ts`** is the single client boundary. It always sends `credentials: "same-origin"` and normalizes failures into `ApiError` (`status`, `code`, `message`, optional `fields`); network failures become `status: 0`, `code: "network_error"`. `AuthUser` carries the account's `role` (`"user"` | `"admin"`), and `adminApi` wraps the two admin endpoints; `adminApi.getUser`/`updateUser` include no special handling — a non-admin session simply receives the backend's `403`.
+- **Validation** (`lib/validate.ts`) mirrors the API's username (3–30 letters, numbers, or underscores) and email rules so the form can fail fast; the server still re-validates every edit.
 
 Because every request goes to `/api/*` on the frontend origin, the cookie is sent automatically with no CORS configuration — mirroring the production reverse proxy. See [API architecture](./api.md) for the token contract.
+
+## Routing & access control
+
+The root path has no page of its own — it exists only to send visitors where they belong: signed-in users to `/dashboard`, everyone else to `/login`. `/dashboard` is available only to signed-in users, and the `/admin/*` pages only to administrators. Access control is layered:
+
+- **`src/proxy.ts`** (Next.js 16 renamed Middleware to Proxy) runs before the route renders. It reads the `pumapanel_token` cookie and redirects `/` to `/dashboard` or `/login` (based on cookie presence) and `/dashboard*` / `/admin*` requests to `/login` when the cookie is absent. It is deliberately _optimistic_: it can only observe that a cookie exists, not whether it is valid, so it acts as a fast pre-filter rather than the security boundary.
+- **`app/page.tsx`** and **`app/dashboard/page.tsx`** close the remaining gap — a cookie that is present but invalid or expired. They subscribe to `AuthProvider` (which calls `GET /api/auth/me`) and call `redirect(...)` during render once the session is known. `redirect` throws, so it is never wrapped in `try/catch`.
+- **`app/admin/*` pages** add a role layer via **`AdminGate`**, which subscribes to the same provider and `redirect`s anonymous visitors to `/login` and signed-in non-admins to `/dashboard`. The pages then fetch the target user through `adminApi.getUser` (`useAdminUser`) and render the profile view or the edit form. With `cacheComponents` enabled, the `useParams<{ userId }>` read suspends during prerendering, so each page wraps it in a `<Suspense>` boundary (the static shell renders the fallback) and keys the content by `userId` so navigation between users resets the loading state.
+
+None of this is a security boundary by itself: the API's `AdminUser` extractor re-checks the account's _current_ role on every admin request and rejects non-admins with `403` even if they reach the endpoint directly.
+
+The pure decision logic lives in **`lib/route-guard.ts`** (`guardRoute(pathname, hasSession)`), which the proxy imports and the unit tests exercise directly. Authorization is ultimately enforced by the API on every request; the routing layer only decides what to render. See [API architecture](./api.md).
 
 ## Testing
 
@@ -86,7 +114,7 @@ Because every request goes to `/api/*` on the frontend origin, the cookie is sen
 moon run web:test   # vitest run
 ```
 
-Suites live in `src/__tests__/` and cover the API client (cookie/credentials, error mapping, network failures), the shared form (validation, in-flight state, field/generic errors), and the session provider (mount bootstrap, login, logout). Vitest uses `jsdom`, Testing Library, and native Vite tsconfig-path resolution (`resolve.tsconfigPaths`).
+Suites live in `src/__tests__/` and cover the API client (cookie/credentials, error mapping, network failures, admin endpoints), the shared form (validation, in-flight state, field/generic errors), the shared validators, the session provider (mount bootstrap, login, logout), the route guard (including `/admin` paths), and the dashboard and admin views (role badge, admin-tools links, role-selector guard, save flow). Vitest uses `jsdom`, Testing Library, and native Vite tsconfig-path resolution (`resolve.tsconfigPaths`).
 
 ## Quality gates
 

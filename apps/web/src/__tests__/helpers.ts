@@ -29,4 +29,13 @@ export const TEST_USER: AuthUser = {
   createdAt: "2026-01-01T00:00:00.000Z",
   email: "user@example.com",
   id: "user-1",
+  role: "user",
+  username: "testuser",
+};
+
+export const ADMIN_USER: AuthUser = {
+  ...TEST_USER,
+  id: "admin-1",
+  role: "admin",
+  username: "testadmin",
 };

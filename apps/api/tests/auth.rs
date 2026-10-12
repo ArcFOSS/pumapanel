@@ -3,163 +3,30 @@
 //! Each test runs against the real router and a throwaway SQLite database file,
 //! so no external services or credentials are required.
 
-use std::sync::Arc;
+mod common;
 
 use api::auth::jwt::{self, Claims};
-use api::config::Config;
-use api::db;
-use api::state::AppState;
-use axum::Router;
-use axum::body::Body;
-use axum::http::{Request, StatusCode, header};
+use axum::http::{StatusCode, header};
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
-use serde_json::{Value, json};
-use sqlx::SqlitePool;
-use tower::ServiceExt;
+use serde_json::json;
 
-const TEST_SECRET: &str = "test-secret-0123456789abcdef0123456789abcdef";
-const COOKIE_NAME: &str = "pumapanel_token";
-
-struct TestContext {
-    app: Router,
-    pool: SqlitePool,
-    config: Arc<Config>,
-}
-
-async fn setup() -> TestContext {
-    let db_path = std::env::temp_dir().join(format!("pumapanel-test-{}.db", uuid::Uuid::new_v4()));
-    let pool = db::init_pool(&format!("sqlite://{}", db_path.display()))
-        .await
-        .expect("initialise test database");
-
-    let config = Arc::new(
-        Config::load(|key| match key {
-            "JWT_SECRET" => Some(TEST_SECRET.to_string()),
-            "APP_ENV" => Some("test".to_string()),
-            _ => None,
-        })
-        .expect("build test configuration"),
-    );
-
-    let state = AppState {
-        db: pool.clone(),
-        config: Arc::clone(&config),
-    };
-
-    TestContext {
-        app: api::app(state),
-        pool,
-        config,
-    }
-}
-
-struct Response {
-    status: StatusCode,
-    body: String,
-    cookies: Vec<String>,
-}
-
-impl Response {
-    fn json(&self) -> Value {
-        serde_json::from_str(&self.body).unwrap_or(Value::Null)
-    }
-}
-
-async fn send(app: &Router, request: Request<Body>) -> Response {
-    let response = app.clone().oneshot(request).await.expect("send request");
-    let status = response.status();
-    let cookies = response
-        .headers()
-        .get_all(header::SET_COOKIE)
-        .iter()
-        .filter_map(|value| value.to_str().ok())
-        .map(str::to_string)
-        .collect();
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .expect("read response body");
-
-    Response {
-        status,
-        body: String::from_utf8_lossy(&body).to_string(),
-        cookies,
-    }
-}
-
-fn json_post(path: &str, payload: Value) -> Request<Body> {
-    Request::builder()
-        .method("POST")
-        .uri(path)
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(payload.to_string()))
-        .expect("build request")
-}
-
-fn get(path: &str) -> Request<Body> {
-    Request::builder()
-        .method("GET")
-        .uri(path)
-        .body(Body::empty())
-        .expect("build request")
-}
-
-fn with_header(
-    mut request: Request<Body>,
-    name: header::HeaderName,
-    value: String,
-) -> Request<Body> {
-    request
-        .headers_mut()
-        .insert(name, value.parse().expect("valid header value"));
-    request
-}
-
-/// Returns the full `Set-Cookie` header for the session cookie, if present.
-fn full_session_cookie(cookies: &[String]) -> Option<String> {
-    cookies
-        .iter()
-        .find(|cookie| cookie.starts_with(&format!("{COOKIE_NAME}=")))
-        .cloned()
-}
-
-/// Returns the `name=value` pair of the session cookie, if present.
-fn session_cookie(cookies: &[String]) -> Option<String> {
-    full_session_cookie(cookies).and_then(|cookie| cookie.split(';').next().map(str::to_string))
-}
-
-fn token_from(cookies: &[String]) -> String {
-    session_cookie(cookies)
-        .expect("session cookie present")
-        .trim_start_matches(&format!("{COOKIE_NAME}="))
-        .to_string()
-}
-
-fn user_id(body: &Value) -> String {
-    body["user"]["id"]
-        .as_str()
-        .expect("user id present")
-        .to_string()
-}
-
-async fn register(app: &Router, email: &str, password: &str) -> Response {
-    send(
-        app,
-        json_post(
-            "/auth/register",
-            json!({ "email": email, "password": password }),
-        ),
-    )
-    .await
-}
+use common::*;
 
 #[tokio::test]
 async fn register_persists_account_and_authenticates() {
     let ctx = setup().await;
 
-    let response = register(&ctx.app, "  New.User@Example.com ", "correct horse battery").await;
+    let response = register(
+        &ctx.app,
+        "  NewUser  ",
+        "  New.User@Example.com ",
+        "correct horse battery",
+    )
+    .await;
 
     assert_eq!(response.status, StatusCode::CREATED);
-    // Email is normalised to lowercase and trimmed.
+    // Username and email are normalized to lowercase and trimmed.
+    assert_eq!(response.json()["user"]["username"], "newuser");
     assert_eq!(response.json()["user"]["email"], "new.user@example.com");
     assert!(response.json()["user"]["createdAt"].is_string());
     // Registration logs the user in immediately.
@@ -169,6 +36,7 @@ async fn register_persists_account_and_authenticates() {
         .await
         .expect("query user")
         .expect("user was persisted");
+    assert_eq!(stored.username, "newuser");
     assert!(
         stored.password_hash.starts_with("$argon2id$"),
         "password must be stored as an Argon2id hash"
@@ -182,19 +50,47 @@ async fn register_persists_account_and_authenticates() {
 async fn register_rejects_duplicate_email_case_insensitively() {
     let ctx = setup().await;
 
-    let first = register(&ctx.app, "dup@example.com", "password123").await;
+    let first = register(&ctx.app, "first", "dup@example.com", "password123").await;
     assert_eq!(first.status, StatusCode::CREATED);
 
-    let second = register(&ctx.app, "DUP@example.com", "password456").await;
+    let second = register(&ctx.app, "second", "DUP@example.com", "password456").await;
     assert_eq!(second.status, StatusCode::CONFLICT);
     assert_eq!(second.json()["error"]["code"], "email_taken");
+}
+
+#[tokio::test]
+async fn register_rejects_duplicate_username_case_insensitively() {
+    let ctx = setup().await;
+
+    let first = register(&ctx.app, "taken", "first@example.com", "password123").await;
+    assert_eq!(first.status, StatusCode::CREATED);
+
+    let second = register(&ctx.app, "TAKEN", "second@example.com", "password456").await;
+    assert_eq!(second.status, StatusCode::CONFLICT);
+    assert_eq!(second.json()["error"]["code"], "username_taken");
+}
+
+#[tokio::test]
+async fn register_rejects_malformed_username() {
+    let ctx = setup().await;
+
+    // Too short.
+    let short = register(&ctx.app, "ab", "short@example.com", "password123").await;
+    assert_eq!(short.status, StatusCode::BAD_REQUEST);
+    assert_eq!(short.json()["error"]["code"], "validation_error");
+    assert_eq!(short.json()["error"]["fields"][0]["field"], "username");
+
+    // Disallowed characters.
+    let invalid = register(&ctx.app, "bad name!", "invalid@example.com", "password123").await;
+    assert_eq!(invalid.status, StatusCode::BAD_REQUEST);
+    assert_eq!(invalid.json()["error"]["fields"][0]["field"], "username");
 }
 
 #[tokio::test]
 async fn register_rejects_invalid_email() {
     let ctx = setup().await;
 
-    let response = register(&ctx.app, "not-an-email", "password123").await;
+    let response = register(&ctx.app, "validname", "not-an-email", "password123").await;
 
     assert_eq!(response.status, StatusCode::BAD_REQUEST);
     assert_eq!(response.json()["error"]["code"], "validation_error");
@@ -205,25 +101,18 @@ async fn register_rejects_invalid_email() {
 async fn register_rejects_short_password() {
     let ctx = setup().await;
 
-    let response = register(&ctx.app, "short@example.com", "short").await;
+    let response = register(&ctx.app, "validname", "short@example.com", "short").await;
 
     assert_eq!(response.status, StatusCode::BAD_REQUEST);
     assert_eq!(response.json()["error"]["fields"][0]["field"], "password");
 }
 
 #[tokio::test]
-async fn login_accepts_valid_credentials() {
+async fn login_accepts_email_credentials() {
     let ctx = setup().await;
-    register(&ctx.app, "login@example.com", "password123").await;
+    register(&ctx.app, "loginuser", "login@example.com", "password123").await;
 
-    let response = send(
-        &ctx.app,
-        json_post(
-            "/auth/login",
-            json!({ "email": "login@example.com", "password": "password123" }),
-        ),
-    )
-    .await;
+    let response = login(&ctx.app, "login@example.com", "password123").await;
 
     assert_eq!(response.status, StatusCode::OK);
     assert!(response.json()["user"]["id"].is_string());
@@ -231,31 +120,28 @@ async fn login_accepts_valid_credentials() {
 }
 
 #[tokio::test]
-async fn login_rejects_unknown_email_and_wrong_password_identically() {
+async fn login_accepts_username_case_insensitively() {
     let ctx = setup().await;
-    register(&ctx.app, "known@example.com", "password123").await;
+    register(&ctx.app, "loginuser", "login@example.com", "password123").await;
 
-    let wrong_password = send(
-        &ctx.app,
-        json_post(
-            "/auth/login",
-            json!({ "email": "known@example.com", "password": "wrong-password" }),
-        ),
-    )
-    .await;
-    let unknown_email = send(
-        &ctx.app,
-        json_post(
-            "/auth/login",
-            json!({ "email": "nobody@example.com", "password": "wrong-password" }),
-        ),
-    )
-    .await;
+    let response = login(&ctx.app, "  LoginUser  ", "password123").await;
+
+    assert_eq!(response.status, StatusCode::OK);
+    assert_eq!(response.json()["user"]["username"], "loginuser");
+}
+
+#[tokio::test]
+async fn login_rejects_unknown_identifier_and_wrong_password_identically() {
+    let ctx = setup().await;
+    register(&ctx.app, "known", "known@example.com", "password123").await;
+
+    let wrong_password = login(&ctx.app, "known@example.com", "wrong-password").await;
+    let unknown_identifier = login(&ctx.app, "nobody@example.com", "wrong-password").await;
 
     assert_eq!(wrong_password.status, StatusCode::UNAUTHORIZED);
-    assert_eq!(unknown_email.status, StatusCode::UNAUTHORIZED);
+    assert_eq!(unknown_identifier.status, StatusCode::UNAUTHORIZED);
     // Identical response so account existence is not revealed.
-    assert_eq!(wrong_password.body, unknown_email.body);
+    assert_eq!(wrong_password.body, unknown_identifier.body);
     assert_eq!(
         wrong_password.json()["error"]["code"],
         "invalid_credentials"
@@ -275,7 +161,7 @@ async fn me_requires_authentication() {
 #[tokio::test]
 async fn me_returns_user_for_session_cookie() {
     let ctx = setup().await;
-    let registered = register(&ctx.app, "cookie@example.com", "password123").await;
+    let registered = register(&ctx.app, "cookieuser", "cookie@example.com", "password123").await;
     let cookie = session_cookie(&registered.cookies).expect("session cookie");
 
     let response = send(
@@ -287,12 +173,13 @@ async fn me_returns_user_for_session_cookie() {
     assert_eq!(response.status, StatusCode::OK);
     assert_eq!(response.json()["user"]["id"], user_id(&registered.json()));
     assert_eq!(response.json()["user"]["email"], "cookie@example.com");
+    assert_eq!(response.json()["user"]["username"], "cookieuser");
 }
 
 #[tokio::test]
 async fn me_accepts_bearer_token() {
     let ctx = setup().await;
-    let registered = register(&ctx.app, "bearer@example.com", "password123").await;
+    let registered = register(&ctx.app, "beareruser", "bearer@example.com", "password123").await;
     let token = token_from(&registered.cookies);
 
     let response = send(
@@ -312,7 +199,7 @@ async fn me_accepts_bearer_token() {
 #[tokio::test]
 async fn me_rejects_token_signed_with_a_different_secret() {
     let ctx = setup().await;
-    let registered = register(&ctx.app, "tamper@example.com", "password123").await;
+    let registered = register(&ctx.app, "tamperuser", "tamper@example.com", "password123").await;
 
     let claims = Claims {
         sub: user_id(&registered.json()),
@@ -343,7 +230,7 @@ async fn me_rejects_token_signed_with_a_different_secret() {
 #[tokio::test]
 async fn me_rejects_expired_token() {
     let ctx = setup().await;
-    let registered = register(&ctx.app, "expired@example.com", "password123").await;
+    let registered = register(&ctx.app, "expireduser", "expired@example.com", "password123").await;
 
     let claims = Claims {
         sub: user_id(&registered.json()),
@@ -374,7 +261,7 @@ async fn me_rejects_expired_token() {
 #[tokio::test]
 async fn logout_clears_session_cookie() {
     let ctx = setup().await;
-    let registered = register(&ctx.app, "logout@example.com", "password123").await;
+    let registered = register(&ctx.app, "logoutuser", "logout@example.com", "password123").await;
     let cookie = session_cookie(&registered.cookies).expect("session cookie");
 
     let response = send(

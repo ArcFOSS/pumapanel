@@ -19,6 +19,6 @@ The app uses:
 - [Tailwind CSS v4](https://tailwindcss.com)
 - [shadcn/ui](https://ui.shadcn.com) — add components with `pnpm dlx shadcn@latest add <component>`
 
-## Editing the home page
+## Routing
 
-Edit `src/app/page.tsx` to change the landing page. The page auto-updates during development.
+There is no standalone home page. The root route (`src/app/page.tsx`) redirects to `/dashboard` when a session is present and `/login` otherwise, and the dashboard (`src/app/dashboard/page.tsx`) is guarded the same way. Edit those files to change the authenticated experience.

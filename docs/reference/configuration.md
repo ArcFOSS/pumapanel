@@ -21,6 +21,10 @@ Where configuration lives, what the variables mean, and which defaults apply.
 | `JWT_SECRET` | — | `api` service | Signing key for session JWTs. **Required** in production, ≥32 chars. Generate with `openssl rand -base64 48` |
 | `JWT_EXPIRATION_SECS` | `86400` | `api` service | Token/cookie lifetime in seconds |
 | `COOKIE_SECURE` | `false` in Compose | `api` service | Adds `Secure` to the session cookie. Set `true` when served over HTTPS (Traefik or TLS upstream of nginx) |
+| `DATABASE_URL` | `sqlite://pumapanel.db` | `api` (local dev) | SQLite file, created next to the API crate on first run. Compose overrides it with a path on the `api-data` volume |
+| `API_URL` | `http://127.0.0.1:3001` | `web` (build-time) | Target of the `/api/*` rewrite; baked into the web build |
+
+> The API loads this file at startup with [`dotenvy`](https://crates.io/crates/dotenvy), searching the current directory and its parents, so `moon run api:dev` and Docker Compose share one `.env`. Already-set environment variables always take precedence, and the file is optional (containers inject configuration directly).
 
 > The API validates `JWT_SECRET` at startup. With `APP_ENV=production` (the Compose default) and no secret it exits with a clear error instead of falling back to an insecure value, so `docker compose up` **requires** `JWT_SECRET` in `.env`.
 
