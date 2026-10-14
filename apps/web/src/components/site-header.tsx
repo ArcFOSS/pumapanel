@@ -47,7 +47,7 @@ export const SiteHeader = () => {
                     buttonVariants({ size: "sm", variant: "ghost" }),
                     "hidden sm:inline-flex"
                   )}
-                  href={`/admin/u/${user.id}`}
+                  href="/admin"
                 >
                   <Shield className="size-4" />
                   Admin

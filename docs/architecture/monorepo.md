@@ -25,26 +25,29 @@ packages:
 
 ## moon projects
 
-`.moon/workspace.yml` registers the two application projects plus a workspace-root project:
+`.moon/workspace.yml` registers the three application projects plus a workspace-root project:
 
-| Project | Directory  | Language                 |
-| ------- | ---------- | ------------------------ |
-| `root`  | `.`        | — (orchestration only)   |
-| `web`   | `apps/web` | TypeScript (application) |
-| `api`   | `apps/api` | Rust (application)       |
+| Project | Directory    | Language                 |
+| ------- | ------------ | ------------------------ |
+| `root`  | `.`          | — (orchestration only)   |
+| `web`   | `apps/web`   | TypeScript (application) |
+| `api`   | `apps/api`   | Rust (application)       |
+| `agent` | `apps/agent` | Rust (application)       |
 
-`workspace.yml` also sets `defaultProject: "root"`, so runnable root tasks can be addressed without a project prefix — `moon run dev` resolves to `root:dev`. The root `moon.yml` defines `dev` as a dependency-only aggregator over `web:dev` and `api:dev`; because it _depends on_ those tasks instead of shelling out to a nested `moon run`, both `moon run dev` and `moon run :dev` share one action graph and never start a server twice.
+`workspace.yml` also sets `defaultProject: "root"`, so runnable root tasks can be addressed without a project prefix — `moon run dev` resolves to `root:dev`. The root `moon.yml` defines `dev` as a dependency-only aggregator over `web:dev`, `api:dev`, and `agent:dev`; because it _depends on_ those tasks instead of shelling out to a nested `moon run`, both `moon run dev` and `moon run :dev` share one action graph and never start a server twice.
+
+> The API links the agent crate for their shared wire types, so moon records an `api → agent` project dependency. moon forbids an `application` from depending on another `application` **in the same stack**, so `api` is classified `stack: backend` and `agent` `stack: systems` (a host-level daemon) to keep the relationship valid with layer constraints enabled.
 
 Each application project declares its tasks in its own `moon.yml`:
 
-| Task        | `web`                          | `api`                         |
-| ----------- | ------------------------------ | ----------------------------- |
-| `dev`       | `pnpm dev` (Next dev, :3000)   | `cargo run` (:3001)           |
-| `build`     | `next build`                   | `cargo build --release`       |
-| `lint`      | `ultracite check .`            | `cargo clippy -- -D warnings` |
-| `typecheck` | `next typegen && tsc --noEmit` | `cargo check --all-targets`   |
-| `test`      | —                              | `cargo test`                  |
-| `start`     | `next start`                   | —                             |
+| Task | `web` | `api` | `agent` |
+| --- | --- | --- | --- |
+| `dev` | `pnpm dev` (Next dev, :3000) | `cargo run` (:3001) | `cargo run` (:9091) |
+| `build` | `next build` | `cargo build --release` | `cargo build --release` |
+| `lint` | `ultracite check .` | `cargo clippy -- -D warnings` | `cargo clippy -- -D warnings` |
+| `typecheck` | `next typegen && tsc --noEmit` | `cargo check --all-targets` | `cargo check --all-targets` |
+| `test` | — | `cargo test` | `cargo test` |
+| `start` | `next start` | — | — |
 
 The `web:typecheck` task runs `next typegen` first, because `tsc` consumes route/`LayoutProps` types that Next only emits into `.next/types/`. This keeps type-checking working on a clean checkout and in CI without a prior build.
 

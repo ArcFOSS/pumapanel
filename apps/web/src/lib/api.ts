@@ -7,6 +7,16 @@
  * configuration is required. The cookie is never read by JavaScript.
  */
 
+import type {
+  CreateServerInput,
+  ServerResponse,
+  ServersApi,
+  ServersResponse,
+  ServersResult,
+  VersionsResponse,
+  VersionsResult,
+} from "@/lib/servers";
+
 export type UserRole = "user" | "admin";
 
 /** Returns true when the account holds the `admin` role. */
@@ -149,4 +159,78 @@ export const adminApi = {
       body: JSON.stringify(changes),
       method: "PATCH",
     }),
+};
+
+/**
+ * Client for the server-management endpoints. Every call is authorized by the
+ * backend's `AdminUser` extractor, like {@link adminApi}.
+ *
+ * Creating a server can block for minutes while the agent pulls the PaperMC
+ * image, so callers should show an in-flight state rather than assume a quick
+ * response.
+ */
+export const serversApi: ServersApi = {
+  create: (input: CreateServerInput) =>
+    request<ServerResponse>("/admin/servers", {
+      body: JSON.stringify(input),
+      method: "POST",
+    }),
+
+  list: () => request<ServersResponse>("/admin/servers"),
+
+  /**
+   * Removes a server. `removeData` defaults to `false` so an accidental delete
+   * cannot destroy a world; the UI opts in explicitly.
+   */
+  remove: (id: string, removeData = false) =>
+    request<null>(
+      `/admin/servers/${encodeURIComponent(id)}?removeData=${removeData}`,
+      { method: "DELETE" }
+    ),
+
+  start: (id: string) =>
+    request<ServerResponse>(`/admin/servers/${encodeURIComponent(id)}/start`, {
+      method: "POST",
+    }),
+
+  stop: (id: string) =>
+    request<ServerResponse>(`/admin/servers/${encodeURIComponent(id)}/stop`, {
+      method: "POST",
+    }),
+
+  versions: () => request<VersionsResponse>("/admin/servers/versions"),
+};
+
+/** Fallback message for failures that are not an {@link ApiError}. */
+export const GENERIC_ERROR_MESSAGE = "Something went wrong. Please try again.";
+
+/**
+ * Loads the server list, turning any failure into a message rather than a
+ * thrown error, so callers can render an error state without a `try` block.
+ */
+export const loadServers = async (api: ServersApi): Promise<ServersResult> => {
+  try {
+    return { data: await api.list(), ok: true };
+  } catch (error) {
+    return {
+      message:
+        error instanceof ApiError ? error.message : GENERIC_ERROR_MESSAGE,
+      ok: false,
+    };
+  }
+};
+
+/** Loads the version catalogue, mapping failures to a message. */
+export const loadVersions = async (
+  api: ServersApi
+): Promise<VersionsResult> => {
+  try {
+    return { data: await api.versions(), ok: true };
+  } catch (error) {
+    return {
+      message:
+        error instanceof ApiError ? error.message : GENERIC_ERROR_MESSAGE,
+      ok: false,
+    };
+  }
 };

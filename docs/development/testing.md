@@ -37,7 +37,11 @@ Suites live in `src/__tests__/` (config in `vitest.config.mts`, setup in `vitest
 - `auth-provider.test.tsx` — the provider bootstraps the session on mount, treats `401` as anonymous, and flips state on login/logout.
 - `validate.test.ts` — shared username/email validators (length, allowed characters, malformed emails, whitespace trimming).
 - `admin-user-view.test.tsx` / `admin-user-edit-form.test.tsx` — the profile view (fields, role badge, edit link) and the editor (client-side validation, role-selector guard for the account's own profile, PATCH payload, success and server field-error states).
-- `dashboard-view.test.tsx` — details rows (including the role) and the admin-only tools section; `route-guard.test.ts` — `/admin` paths are protected like `/dashboard`.
+- `dashboard-view.test.tsx` — details rows (including the role) and the admin-only tools section; `route-guard.test.ts` — `/admin`, `/admin/servers` paths are protected like `/dashboard`.
+- `admin-dashboard-view.test.tsx` — the admin hub links to the servers and account sections.
+- `server-list.test.tsx` — the empty state and the per-server rows (name, status, creation date).
+- `create-server-dialog.test.tsx` — the create modal renders its form with a disabled submit and a notice when open, renders nothing when closed, and asks to close on cancel.
+- `admin-servers-view.test.tsx` — the header action, the `?action=create` modal round-trip (open and cancel) asserted through nuqs' `withNuqsTestingAdapter`.
 
 Global `fetch` is stubbed with `vi.stubGlobal` (module mocking is disallowed by the shared lint rules). Other gates:
 

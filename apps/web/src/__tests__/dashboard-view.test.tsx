@@ -34,10 +34,14 @@ describe("DashboardView", () => {
       screen.getByRole("heading", { name: "Admin tools" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "View admin profile" })
-    ).toHaveAttribute("href", `/admin/u/${ADMIN_USER.id}`);
+      screen.getByRole("link", { name: "Open admin dashboard" })
+    ).toHaveAttribute("href", "/admin");
+    expect(screen.getByRole("link", { name: "Servers" })).toHaveAttribute(
+      "href",
+      "/admin/servers"
+    );
     expect(
-      screen.getByRole("link", { name: "Edit roles & details" })
+      screen.getByRole("link", { name: "Edit your account" })
     ).toHaveAttribute("href", `/admin/edit/u/${ADMIN_USER.id}`);
   });
 });

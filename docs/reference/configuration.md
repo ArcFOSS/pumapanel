@@ -23,8 +23,10 @@ Where configuration lives, what the variables mean, and which defaults apply.
 | `COOKIE_SECURE` | `false` in Compose | `api` service | Adds `Secure` to the session cookie. Set `true` when served over HTTPS (Traefik or TLS upstream of nginx) |
 | `DATABASE_URL` | `sqlite://pumapanel.db` | `api` (local dev) | SQLite file, created next to the API crate on first run. Compose overrides it with a path on the `api-data` volume |
 | `API_URL` | `http://127.0.0.1:3001` | `web` (build-time) | Target of the `/api/*` rewrite; baked into the web build |
+| `AGENT_URL` | unset in Compose | `api` | Base URL of the container-management agent. When unset the panel disables server management. Local dev uses `http://127.0.0.1:9091` |
+| `AGENT_TOKEN` | — | `api`, `agent` | Shared secret (`>= 16` characters) for API <-> agent requests. The agent refuses to start without it; the API requires it whenever `AGENT_URL` is set |
 
-> The API loads this file at startup with [`dotenvy`](https://crates.io/crates/dotenvy), searching the current directory and its parents, so `moon run api:dev` and Docker Compose share one `.env`. Already-set environment variables always take precedence, and the file is optional (containers inject configuration directly).
+> The API and the agent load this file at startup with [`dotenvy`](https://crates.io/crates/dotenvy), searching the current directory and its parents, so `moon run api:dev`, `moon run agent:dev`, and Docker Compose share one `.env`. Already-set environment variables always take precedence, and the file is optional (containers inject configuration directly).
 
 > The API validates `JWT_SECRET` at startup. With `APP_ENV=production` (the Compose default) and no secret it exits with a clear error instead of falling back to an insecure value, so `docker compose up` **requires** `JWT_SECRET` in `.env`.
 

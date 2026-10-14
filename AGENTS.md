@@ -18,7 +18,7 @@ Versions are pinned in `.moon/toolchains.yml` and installed through [proto](http
 
 ```bash
 moon setup                 # install toolchains
-moon run dev               # start every dev server (web on :3000, api on :3001)
+moon run dev               # start every dev server (web :3000, api :3001, agent :9091)
 moon run web:build         # run a task for one project
 moon run :lint             # lint every project
 moon run :typecheck        # type-check every project

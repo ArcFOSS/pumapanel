@@ -11,6 +11,14 @@ const DEFAULT_JWT_ISSUER: &str = "pumapanel";
 const DEFAULT_COOKIE_NAME: &str = "pumapanel_token";
 /// 24 hours.
 const DEFAULT_JWT_EXPIRATION_SECS: u64 = 86_400;
+/// PaperMC's Fill API (v3). The older `api.papermc.io/v2` endpoints are gone.
+const DEFAULT_PAPER_API_URL: &str = "https://fill.papermc.io/v3";
+/// Creating a server can pull the Minecraft image, which is slow. The agent
+/// therefore gets a much longer deadline than a typical request.
+const DEFAULT_AGENT_TIMEOUT_SECS: u64 = 600;
+const DEFAULT_PAPER_TIMEOUT_SECS: u64 = 15;
+const DEFAULT_PAPER_CACHE_TTL_SECS: u64 = 3_600;
+const DEFAULT_SERVER_MEMORY_MB: u32 = 2_048;
 
 /// Deployment environment. Controls whether insecure development fallbacks are
 /// allowed and whether the session cookie defaults to `Secure`.
@@ -69,6 +77,21 @@ pub struct Config {
     pub cookie_secure: bool,
     pub cookie_domain: Option<String>,
     pub app_env: Environment,
+    /// Base URL of the PumaPanel agent. `None` disables server management: the
+    /// panel still runs, but it cannot start or list servers. Development
+    /// (`moon run dev`) leaves it unset.
+    pub agent_url: Option<String>,
+    /// Shared secret for the agent. Required whenever `agent_url` is set.
+    pub agent_token: Option<String>,
+    pub agent_timeout: Duration,
+    /// Base URL of the PaperMC version API, proxied so the browser never talks
+    /// to PaperMC directly (and can be pointed at a stub in tests).
+    pub paper_api_url: String,
+    pub paper_timeout: Duration,
+    /// How long the PaperMC version catalogue is served from memory.
+    pub paper_cache_ttl: Duration,
+    /// JVM heap given to a new server when the request does not choose one.
+    pub default_server_memory_mb: u32,
 }
 
 impl Config {
@@ -125,6 +148,19 @@ impl Config {
             None => app_env.is_production(),
         };
 
+        // Server management is opt-in: without an agent URL the panel runs
+        // exactly as before and the servers page reports the runtime as
+        // unavailable. An agent URL without a token is always a mistake, and a
+        // dangerous one, so it is rejected rather than silently ignored.
+        let agent_url = non_empty(get("AGENT_URL"));
+        let agent_token = non_empty(get("AGENT_TOKEN"));
+        if agent_url.is_some() && agent_token.is_none() {
+            return Err(ConfigError::new(
+                "AGENT_TOKEN is required when AGENT_URL is set; generate one with \
+                 `openssl rand -hex 32` and use the same value for the agent",
+            ));
+        }
+
         Ok(Self {
             host: non_empty(get("HOST")).unwrap_or_else(|| DEFAULT_HOST.to_string()),
             port: non_empty(get("PORT")).unwrap_or_else(|| DEFAULT_PORT.to_string()),
@@ -139,7 +175,48 @@ impl Config {
             cookie_secure,
             cookie_domain: non_empty(get("COOKIE_DOMAIN")),
             app_env,
+            agent_url,
+            agent_token,
+            agent_timeout: Duration::from_secs(positive_u64(
+                get("AGENT_TIMEOUT_SECS"),
+                DEFAULT_AGENT_TIMEOUT_SECS,
+                "AGENT_TIMEOUT_SECS",
+            )?),
+            paper_api_url: non_empty(get("PAPER_API_URL"))
+                .unwrap_or_else(|| DEFAULT_PAPER_API_URL.to_string()),
+            paper_timeout: Duration::from_secs(positive_u64(
+                get("PAPER_TIMEOUT_SECS"),
+                DEFAULT_PAPER_TIMEOUT_SECS,
+                "PAPER_TIMEOUT_SECS",
+            )?),
+            paper_cache_ttl: Duration::from_secs(positive_u64(
+                get("PAPER_CACHE_TTL_SECS"),
+                DEFAULT_PAPER_CACHE_TTL_SECS,
+                "PAPER_CACHE_TTL_SECS",
+            )?),
+            default_server_memory_mb: match non_empty(get("DEFAULT_SERVER_MEMORY_MB")) {
+                Some(raw) => raw
+                    .parse::<u32>()
+                    .ok()
+                    .filter(|value| *value > 0)
+                    .ok_or_else(|| {
+                        ConfigError::new("DEFAULT_SERVER_MEMORY_MB must be a positive integer")
+                    })?,
+                None => DEFAULT_SERVER_MEMORY_MB,
+            },
         })
+    }
+}
+
+/// Reads a positive integer setting, falling back to `default` when unset.
+fn positive_u64(raw: Option<String>, default: u64, name: &str) -> Result<u64, ConfigError> {
+    match non_empty(raw) {
+        Some(value) => value
+            .parse::<u64>()
+            .ok()
+            .filter(|value| *value > 0)
+            .ok_or_else(|| ConfigError::new(format!("{name} must be a positive integer"))),
+        None => Ok(default),
     }
 }
 

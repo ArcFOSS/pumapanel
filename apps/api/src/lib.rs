@@ -1,8 +1,11 @@
 pub mod admin;
+pub mod agent_client;
 pub mod auth;
 pub mod config;
 pub mod db;
 pub mod error;
+pub mod paper;
+pub mod servers;
 pub mod state;
 pub mod users;
 
@@ -30,5 +33,6 @@ pub fn app(state: AppState) -> Router {
         .route("/health", get(health))
         .merge(auth::router())
         .merge(admin::router())
+        .merge(servers::router())
         .with_state(state)
 }

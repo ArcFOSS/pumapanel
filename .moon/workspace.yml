@@ -4,6 +4,7 @@ projects:
   root: "."
   web: "apps/web"
   api: "apps/api"
+  agent: "apps/agent"
 
 # Allows workspace-level tasks (see the root `moon.yml`) to be addressed
 # without a project prefix, e.g. `moon run dev`.

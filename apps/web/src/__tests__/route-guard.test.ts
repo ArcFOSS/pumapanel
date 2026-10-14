@@ -17,12 +17,16 @@ describe("guardRoute", () => {
 
   it("treats admin pages as protected paths", () => {
     expect(guardRoute("/admin", false)).toEqual({ redirectTo: "/login" });
+    expect(guardRoute("/admin/servers", false)).toEqual({
+      redirectTo: "/login",
+    });
     expect(guardRoute("/admin/u/user-1", false)).toEqual({
       redirectTo: "/login",
     });
     expect(guardRoute("/admin/edit/u/user-1", false)).toEqual({
       redirectTo: "/login",
     });
+    expect(guardRoute("/admin/servers", true)).toBeNull();
     expect(guardRoute("/admin/u/user-1", true)).toBeNull();
     expect(guardRoute("/admin/edit/u/user-1", true)).toBeNull();
   });

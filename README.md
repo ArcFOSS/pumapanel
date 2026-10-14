@@ -33,6 +33,7 @@ PumaPanel is a monorepo that demonstrates and standardizes a modern full-stack s
 | --- | --- |
 | `apps/web` | Next.js 16 / React 19 frontend (Tailwind CSS v4, shadcn/ui) |
 | `apps/api` | Rust API service (axum + tokio) |
+| `apps/agent` | Rust container-management agent (axum; drives Podman/Docker) |
 | `packages/lint` | Shared Ultracite / Oxlint / Oxfmt config (`@pumapanel/lint`) |
 | `compose.yaml` | Container stack for `web` + `api` (optional Traefik/nginx profiles) |
 | `deploy/traefik` | Traefik static + dynamic config (ACME, routing, `/api` prefix strip) |
@@ -47,7 +48,7 @@ Toolchain versions (Node 24, pnpm 12, Rust 1.99) are pinned in `.moon/toolchains
 ```bash
 moon setup        # install toolchains
 pnpm install      # install JS/TS dependencies
-moon run dev      # start all dev servers (web :3000, api :3001)
+moon run dev      # start all dev servers (web :3000, api :3001, agent :9091)
 ```
 
 Open http://127.0.0.1:3000 for the web app — it proxies `/api/*` to the API, so registration, login, and the session cookie all work same-origin. There is no marketing page: `/` sends signed-in visitors to `/dashboard` and everyone else to `/login`, and `/dashboard` itself redirects to `/login` while signed out. The API is also reachable directly at http://127.0.0.1:3001 (`/health`, `/auth/*`, and the admin-only `/admin/users/*`). See `docs/architecture/web.md`.

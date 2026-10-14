@@ -6,6 +6,7 @@ Every port PumaPanel uses, in development and in containers.
 | --- | --- | --- | --- | --- |
 | `3000` | `web` | Next dev server | Next standalone server | Host loopback (`127.0.0.1:${WEB_PORT:-3000}`) |
 | `3001` | `api` | axum (default `127.0.0.1:3001`) | axum (`0.0.0.0:3001`) | Container network only |
+| `9091` | `agent` | axum agent (default `127.0.0.1:9091`) | not in the Compose stack yet | Host loopback (`127.0.0.1:9091`) in dev |
 | `80` | `traefik` (profile) | — | HTTP entrypoint → 301 to HTTPS | Host `${HTTP_PORT:-80}` |
 | `443` | `traefik` (profile) | — | HTTPS entrypoint (TLS-ALPN) | Host `${HTTPS_PORT:-443}` |
 | `80` | `nginx` (profile) | — | HTTP proxy to `web`/`api` | Host `${HTTP_PORT:-80}` |

@@ -2,6 +2,12 @@ $schema: "https://moonrepo.dev/schemas/project.json"
 
 language: "rust"
 layer: "application"
+# The API links the agent crate for their shared wire types, so moon records an
+# API -> agent project dependency. moon forbids an `application` from depending
+# on another `application` *within the same stack*, so the two projects are
+# placed in different stacks (backend vs. systems) to keep the relationship
+# valid while layer constraints stay enabled. See `apps/agent/moon.yml`.
+stack: "backend"
 tags:
   - rust
   - backend

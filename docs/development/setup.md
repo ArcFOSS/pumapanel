@@ -37,6 +37,8 @@ JWT_EXPIRATION_SECS=86400
 COOKIE_SECURE=false          # local dev is plain HTTP
 DATABASE_URL=sqlite://pumapanel.db
 API_URL=http://127.0.0.1:3001
+AGENT_URL=http://127.0.0.1:9091
+AGENT_TOKEN=<openssl rand -hex 32>   # shared secret for the API <-> agent
 ```
 
 `DATABASE_URL` points at a SQLite file created next to the API crate on first run; the embedded migrations run automatically at startup, so there is no separate migrate step. See [Configuration reference](../reference/configuration.md) for every variable.
@@ -53,10 +55,11 @@ This starts, in parallel:
 | ------- | --------------------------------------------------- |
 | `web`   | http://127.0.0.1:3000 (Next dev server)             |
 | `api`   | http://127.0.0.1:3001 (axum, `/health` + `/auth/*`) |
+| `agent` | http://127.0.0.1:9091 (container-management daemon) |
 
-Run one at a time with `moon run web:dev` or `moon run api:dev`.
+Run one at a time with `moon run web:dev`, `moon run api:dev`, or `moon run agent:dev`.
 
-`moon run dev` is shorthand for the root aggregator task, which depends on both `web:dev` and `api:dev`. `moon run :dev` (the all-projects scope) runs the same action graph, so either spelling starts each server exactly once.
+`moon run dev` is shorthand for the root aggregator task, which depends on `web:dev`, `api:dev`, and `agent:dev`. `moon run :dev` (the all-projects scope) runs the same action graph, so either spelling starts each server exactly once. The agent requires `AGENT_TOKEN` (and the API reads the matching `AGENT_URL`/`AGENT_TOKEN`) from the root `.env`; without a token the agent exits and fails the pipeline.
 
 In dev the web app rewrites `/api/*` to the API (default `http://127.0.0.1:3001`), so the browser uses the same origin and the session cookie stays same-origin: open http://127.0.0.1:3000/register to create an account (you land on the session-guarded `/dashboard`), or hit the API directly at `http://127.0.0.1:3001/health`. The root path has no page — `/` redirects to `/dashboard` when signed in and to `/login` when signed out, and `/dashboard` itself redirects to `/login` while signed out.
 

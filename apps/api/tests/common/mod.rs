@@ -29,6 +29,12 @@ pub struct TestContext {
 
 /// Builds the real application router against a throwaway SQLite database.
 pub async fn setup() -> TestContext {
+    setup_with(|_| None).await
+}
+
+/// Like [`setup`], but lets a suite inject extra configuration — the agent and
+/// PaperMC URLs, so those suites can drive real stub servers.
+pub async fn setup_with(extra: impl Fn(&str) -> Option<String>) -> TestContext {
     let db_path = std::env::temp_dir().join(format!("pumapanel-test-{}.db", uuid::Uuid::new_v4()));
     let pool = db::init_pool(&format!("sqlite://{}", db_path.display()))
         .await
@@ -38,15 +44,12 @@ pub async fn setup() -> TestContext {
         Config::load(|key| match key {
             "JWT_SECRET" => Some(TEST_SECRET.to_string()),
             "APP_ENV" => Some("test".to_string()),
-            _ => None,
+            other => extra(other),
         })
         .expect("build test configuration"),
     );
 
-    let state = AppState {
-        db: pool.clone(),
-        config: Arc::clone(&config),
-    };
+    let state = AppState::new(pool.clone(), (*config).clone()).expect("build application state");
 
     TestContext {
         app: api::app(state),

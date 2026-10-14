@@ -1,6 +1,6 @@
 # Web App (`apps/web`)
 
-The frontend is a [Next.js](https://nextjs.org) 16 / [React](https://react.dev) 19 application using the App Router, styled with [Tailwind CSS v4](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) components. It owns the login and registration UI, an authenticated dashboard, and an admin-only user-management area, and reflects the current session and role.
+The frontend is a [Next.js](https://nextjs.org) 16 / [React](https://react.dev) 19 application using the App Router, styled with [Tailwind CSS v4](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) components. It owns the login and registration UI, an authenticated dashboard, and an admin-only area (a central dashboard, user management, and a servers list), and reflects the current session and role.
 
 ## Stack
 
@@ -8,6 +8,7 @@ The frontend is a [Next.js](https://nextjs.org) 16 / [React](https://react.dev) 
 | ---------- | -------------------------------------------------------------- |
 | Framework  | Next.js 16.4.0 (App Router, React Compiler enabled)            |
 | UI         | React 19.3.0 + `@base-ui/react`, `lucide-react` icons          |
+| URL state  | nuqs 2 (`useQueryState`) for search-param-driven UI            |
 | Styling    | Tailwind CSS v4 via the `@tailwindcss/turbopack` loader        |
 | Components | shadcn/ui (`components.json`, base color `neutral`)            |
 | Tests      | Vitest 5 + Testing Library (`jsdom`)                           |
@@ -24,6 +25,8 @@ apps/web/
       login/page.tsx         Sign-in page
       register/page.tsx      Registration page
       dashboard/page.tsx     Authenticated dashboard (session-guarded)
+      admin/page.tsx         Admin-only central dashboard (hub)
+      admin/servers/page.tsx Admin-only servers list (`?action=create`)
       admin/u/[userId]/page.tsx        Admin-only profile view
       admin/edit/u/[userId]/page.tsx   Admin-only profile editor
       globals.css            Tailwind v4 entry + design tokens
@@ -33,16 +36,21 @@ apps/web/
       auth-shell.tsx         Split-screen layout for the auth pages
       dashboard-view.tsx     Presentational dashboard body
       admin-gate.tsx         Role gate for the admin pages
+      admin-dashboard-view.tsx  Presentational admin hub (section cards)
+      admin-servers-view.tsx Admin servers screen (URL state via nuqs)
+      server-list.tsx        Read-only server list + empty state
+      create-server-dialog.tsx  Server-creation preview modal (disabled submit)
       admin-user-view.tsx    Admin read-only profile display
       admin-user-edit-form.tsx  Admin profile editor (username, email, role)
       admin-error-card.tsx   Admin-page error/alert state
       page-loading.tsx       Centered spinner for session-aware pages
       site-header.tsx        Shared sticky header (session-aware)
       logo.tsx               Wordmark
-      ui/                    shadcn/ui components (button, input, label, …)
+      ui/                    shadcn/ui components (button, input, label, dialog, …)
     lib/
       api.ts                 Typed API client + `ApiError` (auth + admin)
       route-guard.ts         Pure access-control rules (shared with the proxy)
+      servers.ts             Server list model + placeholder data (no API yet)
       use-admin-user.ts      Loads one user via the admin API (loading/error)
       validate.ts            Shared username/email validators (mirror the API)
       utils.ts               `cn()` helper (clsx + tailwind-merge)
@@ -103,6 +111,7 @@ The root path has no page of its own — it exists only to send visitors where t
 - **`src/proxy.ts`** (Next.js 16 renamed Middleware to Proxy) runs before the route renders. It reads the `pumapanel_token` cookie and redirects `/` to `/dashboard` or `/login` (based on cookie presence) and `/dashboard*` / `/admin*` requests to `/login` when the cookie is absent. It is deliberately _optimistic_: it can only observe that a cookie exists, not whether it is valid, so it acts as a fast pre-filter rather than the security boundary.
 - **`app/page.tsx`** and **`app/dashboard/page.tsx`** close the remaining gap — a cookie that is present but invalid or expired. They subscribe to `AuthProvider` (which calls `GET /api/auth/me`) and call `redirect(...)` during render once the session is known. `redirect` throws, so it is never wrapped in `try/catch`.
 - **`app/admin/*` pages** add a role layer via **`AdminGate`**, which subscribes to the same provider and `redirect`s anonymous visitors to `/login` and signed-in non-admins to `/dashboard`. The pages then fetch the target user through `adminApi.getUser` (`useAdminUser`) and render the profile view or the edit form. With `cacheComponents` enabled, the `useParams<{ userId }>` read suspends during prerendering, so each page wraps it in a `<Suspense>` boundary (the static shell renders the fallback) and keys the content by `userId` so navigation between users resets the loading state.
+- **`/admin`** is the central admin dashboard: a hub of section cards linking to servers and the admin's own account. **`/admin/servers`** lists servers with a **create modal** (shadcn/base-ui `Dialog`) whose visibility lives in the `action` search param (`?action=create`), managed with [nuqs](https://nuqs.dev) so the state is shareable and the Back button closes it. The dialog's backdrop blurs the page behind it (`backdrop-blur`, gated behind `supports-backdrop-filter`). The `NuqsAdapter` is mounted on that route (not the root layout) inside a `<Suspense>` boundary, because its provider reads the search params — which suspends during prerendering under `cacheComponents` — so every other page stays a static shell. Server creation is not implemented in the backend yet, so the modal is a preview with a disabled submit button.
 
 None of this is a security boundary by itself: the API's `AdminUser` extractor re-checks the account's _current_ role on every admin request and rejects non-admins with `403` even if they reach the endpoint directly.
 
@@ -114,7 +123,7 @@ The pure decision logic lives in **`lib/route-guard.ts`** (`guardRoute(pathname,
 moon run web:test   # vitest run
 ```
 
-Suites live in `src/__tests__/` and cover the API client (cookie/credentials, error mapping, network failures, admin endpoints), the shared form (validation, in-flight state, field/generic errors), the shared validators, the session provider (mount bootstrap, login, logout), the route guard (including `/admin` paths), and the dashboard and admin views (role badge, admin-tools links, role-selector guard, save flow). Vitest uses `jsdom`, Testing Library, and native Vite tsconfig-path resolution (`resolve.tsconfigPaths`).
+Suites live in `src/__tests__/` and cover the API client (cookie/credentials, error mapping, network failures, admin endpoints), the shared form (validation, in-flight state, field/generic errors), the shared validators, the session provider (mount bootstrap, login, logout), the route guard (including `/admin` and `/admin/servers` paths), the dashboard and admin views (role badge, admin-tools links, role-selector guard, save flow), and the servers screens (empty state, list rows, the disabled create-dialog submit, and the `action=create` modal round-trip through nuqs' testing adapter). Vitest uses `jsdom`, Testing Library, and native Vite tsconfig-path resolution (`resolve.tsconfigPaths`).
 
 ## Quality gates
 

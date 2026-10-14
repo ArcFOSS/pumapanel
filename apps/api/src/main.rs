@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use api::config::Config;
 use api::db;
 use api::state::AppState;
@@ -43,16 +41,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let _ = dotenvy::dotenv();
 
     let config = Config::from_env()?;
-    let pool = db::init_pool(&config.database_url).await?;
-
-    // Bind to `127.0.0.1` during local development, but allow containers to
-    // listen on all interfaces via `HOST=0.0.0.0`.
     let address = format!("{}:{}", config.host, config.port);
+    let agent_configured = config.agent_url.is_some();
 
-    let state = AppState {
-        db: pool,
-        config: Arc::new(config),
-    };
+    let pool = db::init_pool(&config.database_url).await?;
+    let state = AppState::new(pool, config)?;
+
+    if !agent_configured {
+        // Not an error: the panel is fully usable without server management.
+        println!("note: AGENT_URL is not set, so server management is disabled");
+    }
 
     let app = api::app(state);
     let listener = TcpListener::bind(&address).await?;

@@ -148,22 +148,29 @@ export const DashboardView = ({ user }: DashboardViewProps) => {
               Admin tools
             </h2>
             <p className="text-muted-foreground text-sm">
-              Manage user accounts and roles. These pages are only reachable by
-              administrators, and the API re-checks the role on every request.
+              Manage servers and user accounts. These pages are only reachable
+              by administrators, and the API re-checks the role on every
+              request.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link
               className={buttonVariants({ size: "sm", variant: "outline" })}
-              href={`/admin/u/${user.id}`}
+              href="/admin"
             >
-              View admin profile
+              Open admin dashboard
+            </Link>
+            <Link
+              className={buttonVariants({ size: "sm", variant: "outline" })}
+              href="/admin/servers"
+            >
+              Servers
             </Link>
             <Link
               className={buttonVariants({ size: "sm", variant: "outline" })}
               href={`/admin/edit/u/${user.id}`}
             >
-              Edit roles &amp; details
+              Edit your account
             </Link>
           </div>
         </section>

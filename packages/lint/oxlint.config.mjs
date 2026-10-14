@@ -38,6 +38,20 @@ const shadcnOverrides = {
         "jsx-a11y/label-has-associated-control": "off",
       },
     },
+    {
+      // The generated `InputGroup` wraps its controls in a `role="group"` div
+      // and makes the whole addon a click target that focuses the input. Both
+      // are generator idioms: the field is still reachable by keyboard on its
+      // own, so the extra mouse affordance and ARIA grouping are not barriers.
+      files: ["**/components/ui/input-group.tsx"],
+      rules: {
+        "anti-slop/require-safety-comment-for-type-assertion": "off",
+        "import/consistent-type-specifier-style": "off",
+        "jsx-a11y/click-events-have-key-events": "off",
+        "jsx-a11y/no-noninteractive-element-interactions": "off",
+        "jsx-a11y/prefer-tag-over-role": "off",
+      },
+    },
   ],
 };
 

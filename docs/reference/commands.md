@@ -11,30 +11,33 @@ All commands are run from the repository root. Toolchain commands resolve throug
 
 ## Development
 
-| Command                 | Purpose                                           |
-| ----------------------- | ------------------------------------------------- |
-| `moon run dev`          | Start both dev servers (web `:3000`, api `:3001`) |
-| `moon run :dev`         | Same, via the all-projects scope                  |
-| `moon run web:dev`      | Next.js dev server only                           |
-| `moon run api:dev`      | `cargo run` only                                  |
-| `pnpm --filter web dev` | Same as `web:dev` without moon                    |
-| `pnpm install`          | Install JS/TS workspace dependencies              |
+| Command | Purpose |
+| --- | --- |
+| `moon run dev` | Start all dev servers (web `:3000`, api `:3001`, agent `:9091`) |
+| `moon run :dev` | Same, via the all-projects scope |
+| `moon run web:dev` | Next.js dev server only |
+| `moon run api:dev` | `cargo run` only (API) |
+| `moon run agent:dev` | `cargo run` only (agent) |
+| `pnpm --filter web dev` | Same as `web:dev` without moon |
+| `pnpm install` | Install JS/TS workspace dependencies |
 
 ## Builds
 
-| Command              | Purpose                            |
-| -------------------- | ---------------------------------- |
-| `moon run web:build` | `next build` (production)          |
-| `moon run api:build` | `cargo build --release`            |
-| `moon run :build`    | Everything above for every project |
+| Command                | Purpose                            |
+| ---------------------- | ---------------------------------- |
+| `moon run web:build`   | `next build` (production)          |
+| `moon run api:build`   | `cargo build --release`            |
+| `moon run agent:build` | `cargo build --release` (agent)    |
+| `moon run :build`      | Everything above for every project |
 
 ## Quality gates
 
 | Command | Purpose |
 | --- | --- |
-| `moon run :lint` | Oxlint (web) + `cargo clippy -D warnings` (api) |
-| `moon run :typecheck` | `next typegen && tsc --noEmit` (web) + `cargo check` (api) |
-| `moon run api:test` | `cargo test` |
+| `moon run :lint` | Oxlint (web) + `cargo clippy -D warnings` (api, agent) |
+| `moon run :typecheck` | `next typegen && tsc --noEmit` (web) + `cargo check` (api, agent) |
+| `moon run api:test` | `cargo test` (API) |
+| `moon run agent:test` | `cargo test` (agent) |
 | `moon run web:test` | `vitest run` |
 | `pnpm check` | `ultracite check` over the JS/TS workspace |
 | `pnpm fix` | `ultracite fix` (auto-format + auto-fix lint) |
@@ -64,6 +67,7 @@ Swap `docker` for `podman` where applicable.
 | Command | Purpose |
 | --- | --- |
 | `curl -fsS http://127.0.0.1:3001/health` | API health (`{"status":"ok"}`) |
+| `curl -fsS http://127.0.0.1:9091/health` | Agent health (`{"status":"ok"}`) |
 | `curl -fsSI http://127.0.0.1:3000/login` | Web HTTP status (`/` redirects here when signed out) |
 | `curl -fsS http://127.0.0.1:3000/api/auth/me` | Session check through the web origin (`401` when signed out) |
 | `nginx -t` (see [operations](../deployment/operations.md)) | nginx config syntax |

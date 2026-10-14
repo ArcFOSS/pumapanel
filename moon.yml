@@ -11,5 +11,6 @@ tasks:
     deps:
       - "web:dev"
       - "api:dev"
+      - "agent:dev"
     options:
       persistent: true
