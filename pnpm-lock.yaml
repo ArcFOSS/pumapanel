@@ -168,7 +168,7 @@ importers:
     devDependencies:
       '@moonrepo/cli':
         specifier: latest
-        version: 2.6.1
+        version: 2.6.2
       '@pumapanel/lint':
         specifier: workspace:*
         version: link:packages/lint
@@ -182,8 +182,8 @@ importers:
         specifier: ^1.87.0
         version: 1.87.0
       ultracite:
-        specifier: ^7.12.4
-        version: 7.12.4(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10)
+        specifier: ^8.0.1
+        version: 8.0.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10)
 
   apps/web:
     dependencies:
@@ -264,8 +264,8 @@ importers:
         specifier: ^7
         version: 7.0.2
       ultracite:
-        specifier: ^7.12.4
-        version: 7.12.4(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10)
+        specifier: ^8.0.1
+        version: 8.0.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10)
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.5)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(yaml@2.9.1))
@@ -294,8 +294,8 @@ importers:
         specifier: ^0.9.17
         version: 0.9.17
       ultracite:
-        specifier: ^7.12.4
-        version: 7.12.4(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10)
+        specifier: ^8.0.1
+        version: 8.0.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10)
 
 packages:
 
@@ -833,46 +833,46 @@ packages:
       '@cfworker/json-schema':
         optional: true
 
-  '@moonrepo/cli@2.6.1':
-    resolution: {integrity: sha512-gnS8UbCl6Pd7sMN5rGNbehy32W3ybHJqBYVjUX/Hfxe+0QPWIVgKiIObZZfU9IruPiqqG35tYwcI5MrE/m2PpQ==}
+  '@moonrepo/cli@2.6.2':
+    resolution: {integrity: sha512-P+iqrVlYBLJb5CK+OFTXDu8AJ72kGT+dOdzsEFzC1hwx2N34RUvxXlaxBRBhRTkYIHL9Zg0SyN6EGoF1l++wjA==}
     hasBin: true
 
-  '@moonrepo/core-linux-arm64-gnu@2.6.1':
-    resolution: {integrity: sha512-oBohc4GhVu+EETh6IMMccew05wm923wPcw0mYMxrBm9MqdZVAFtOCFUXqbV6Si+++wsjnGA6xhTQ/kqr907fCQ==}
+  '@moonrepo/core-linux-arm64-gnu@2.6.2':
+    resolution: {integrity: sha512-u3nYPxD5Zr+FKmdAG/GDSPEwAkVwxCDhhYx0eIbRApry/vlNm1SYidoP3B5LFSQubtfP63fk2RP0LYzBMk2tFw==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@moonrepo/core-linux-arm64-musl@2.6.1':
-    resolution: {integrity: sha512-gl32BFWLbRDxIFvagNNiaXHBBy/qRw0x64yil9qmFlT3cuvXSQCeeuJ20T3VSjsH+2H/kxpQLSqoYlZLG7ExCw==}
+  '@moonrepo/core-linux-arm64-musl@2.6.2':
+    resolution: {integrity: sha512-0Xq9JnJ0FjRmM47OZe0d35W+Vm5SJD/V4DxG0TqkVLFVpwijqYtNyrzrBde3ay/FBkkZ+psLy4OIaa7z10S24g==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@moonrepo/core-linux-x64-gnu@2.6.1':
-    resolution: {integrity: sha512-LbKYe40mIyMgKvtbTyQ1vXduwXf9Bo0cePCTFfQoIKR0A0tPmfMh/weP3oNU+DFMvGo30cPy+xDJMLN0mqgo4w==}
+  '@moonrepo/core-linux-x64-gnu@2.6.2':
+    resolution: {integrity: sha512-Ocb3m2ogfHCmX1DzEuWXctNRdf7qgiMVW4eE0wN5gxD663xUndgiR+hj07ed/32/0MNo3rXI79V4C4scLvvNLA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@moonrepo/core-linux-x64-musl@2.6.1':
-    resolution: {integrity: sha512-xGvBpS5SPzwX/fjTz6T7dLoi2sde1SC0LysI17u8YuNVcgZCBAQplqY1jdev4ZDaci+ppGy/kXP1qFIvK6Ou3Q==}
+  '@moonrepo/core-linux-x64-musl@2.6.2':
+    resolution: {integrity: sha512-BDAFwAppz2lMd/zcKqA9BIbL8eX2NceuJN0UNyLy2DWopqyguAA0fbkxOmYXTOtIMllK6Q7zX6fRT38I06Kp1A==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@moonrepo/core-macos-arm64@2.6.1':
-    resolution: {integrity: sha512-TbFZZhNkOztG0TW/fpltUiAO8jOSP+lQS/bRyFm+R//OVcW770oAzZk4XCeMOfLZP3fuvx25wSyv/zXTI/bh+A==}
+  '@moonrepo/core-macos-arm64@2.6.2':
+    resolution: {integrity: sha512-B5zVp9Wr0MJ4kgjJFJpUOPCNFKJblUzON4TA+SnlhuqC3X8ep6FBCszpsyc5YKCFa4sIJcKUt4CJGfOtvSrrbA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@moonrepo/core-macos-x64@2.6.1':
-    resolution: {integrity: sha512-dcrjHFT4l6YXmG6piV9hOGHkRg1AfKbpc8nH1eM6+7iNT2XtzKoEACBbsiTArXrdeI4ixiDcQ+46MRtixtDmpw==}
+  '@moonrepo/core-macos-x64@2.6.2':
+    resolution: {integrity: sha512-Rj4gUI3SJwhgu8tCaixbqAyYBiXTzNVlXXhv9xcUoAm9pYQUoAluPh7FLPd5ubXGpDnHReftT58Miq3sI5SilA==}
     cpu: [x64]
     os: [darwin]
 
-  '@moonrepo/core-windows-x64-msvc@2.6.1':
-    resolution: {integrity: sha512-WDaVwaGgBPLewvBFb/9K1gIDH+aODM5cmYiB11FyuLG7hkISfRtW5thN9t7PQvnGOCFqtDzGrPEPNtWZsp1KPg==}
+  '@moonrepo/core-windows-x64-msvc@2.6.2':
+    resolution: {integrity: sha512-ABfBlco/Qbn8ed6SvTL4bqqD5dMUrbCCkIthaWfNrviM8WHjnbaFt8oYpGwInC/S2zmyWuxoEroV3gjkFNfrTg==}
     cpu: [x64]
     os: [win32]
 
@@ -4192,15 +4192,16 @@ packages:
   ufo@1.6.4:
     resolution: {integrity: sha512-JFNbkD1Svwe0KvGi8GOeLcP4kAWQ609twvCdcHxq1oSL8svv39ZuSvajcD8B+5D0eL4+s1Is2D/O6KN3qcTeRA==}
 
-  ultracite@7.12.4:
-    resolution: {integrity: sha512-6jVEwaZBaytFm6XRoI3WGS2ZydrkrNvHTD0qTf7983ti2FlEWL1YcxnPaMaYuS6PkXqMhIK2XGr0cbsL4x5pQA==}
+  ultracite@8.0.1:
+    resolution: {integrity: sha512-4XtB3My7o/O8uveSBPjMO6aPwkO7LEGDf2RCuR4jMVSJ4JByLNIb8+xpCR5M+HssgPrl0aSTQ/40od80ItmiqQ==}
+    engines: {node: '>=22.18.0'}
     hasBin: true
     peerDependencies:
       '@biomejs/biome': ^2.5.0
       eslint: ^10.9.0
-      oxfmt: '>=0.59.0'
+      oxfmt: '>=0.71.0 <1'
       oxlint: ^1.86.0
-      prettier: ^3.0.0
+      prettier: ^3.5.3
       stylelint: ^17.0.0
     peerDependenciesMeta:
       '@biomejs/biome':
@@ -5011,37 +5012,37 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@moonrepo/cli@2.6.1':
+  '@moonrepo/cli@2.6.2':
     dependencies:
       detect-libc: 2.1.2
     optionalDependencies:
-      '@moonrepo/core-linux-arm64-gnu': 2.6.1
-      '@moonrepo/core-linux-arm64-musl': 2.6.1
-      '@moonrepo/core-linux-x64-gnu': 2.6.1
-      '@moonrepo/core-linux-x64-musl': 2.6.1
-      '@moonrepo/core-macos-arm64': 2.6.1
-      '@moonrepo/core-macos-x64': 2.6.1
-      '@moonrepo/core-windows-x64-msvc': 2.6.1
+      '@moonrepo/core-linux-arm64-gnu': 2.6.2
+      '@moonrepo/core-linux-arm64-musl': 2.6.2
+      '@moonrepo/core-linux-x64-gnu': 2.6.2
+      '@moonrepo/core-linux-x64-musl': 2.6.2
+      '@moonrepo/core-macos-arm64': 2.6.2
+      '@moonrepo/core-macos-x64': 2.6.2
+      '@moonrepo/core-windows-x64-msvc': 2.6.2
 
-  '@moonrepo/core-linux-arm64-gnu@2.6.1':
+  '@moonrepo/core-linux-arm64-gnu@2.6.2':
     optional: true
 
-  '@moonrepo/core-linux-arm64-musl@2.6.1':
+  '@moonrepo/core-linux-arm64-musl@2.6.2':
     optional: true
 
-  '@moonrepo/core-linux-x64-gnu@2.6.1':
+  '@moonrepo/core-linux-x64-gnu@2.6.2':
     optional: true
 
-  '@moonrepo/core-linux-x64-musl@2.6.1':
+  '@moonrepo/core-linux-x64-musl@2.6.2':
     optional: true
 
-  '@moonrepo/core-macos-arm64@2.6.1':
+  '@moonrepo/core-macos-arm64@2.6.2':
     optional: true
 
-  '@moonrepo/core-macos-x64@2.6.1':
+  '@moonrepo/core-macos-x64@2.6.2':
     optional: true
 
-  '@moonrepo/core-windows-x64-msvc@2.6.1':
+  '@moonrepo/core-windows-x64-msvc@2.6.2':
     optional: true
 
   '@next/env@16.4.0': {}
@@ -5513,6 +5514,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@typescript-eslint/parser@8.71.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)':
+    dependencies:
+      '@typescript-eslint/scope-manager': 8.71.1
+      '@typescript-eslint/types': 8.71.1
+      '@typescript-eslint/typescript-estree': 8.71.1(supports-color@7.2.0)(typescript@5.9.3)
+      '@typescript-eslint/visitor-keys': 8.71.1
+      debug: 4.4.3(supports-color@7.2.0)
+      eslint: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - supports-color
+
   '@typescript-eslint/parser@8.71.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.71.1
@@ -5529,6 +5542,15 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.9.3)
       '@typescript-eslint/types': 8.56.1
+      debug: 4.4.3(supports-color@7.2.0)
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - supports-color
+
+  '@typescript-eslint/project-service@8.71.1(supports-color@7.2.0)(typescript@5.9.3)':
+    dependencies:
+      '@typescript-eslint/tsconfig-utils': 8.71.1(typescript@5.9.3)
+      '@typescript-eslint/types': 8.71.1
       debug: 4.4.3(supports-color@7.2.0)
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -5554,6 +5576,10 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.71.1
 
   '@typescript-eslint/tsconfig-utils@8.56.1(typescript@5.9.3)':
+    dependencies:
+      typescript: 5.9.3
+
+  '@typescript-eslint/tsconfig-utils@8.71.1(typescript@5.9.3)':
     dependencies:
       typescript: 5.9.3
 
@@ -5583,6 +5609,21 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.9.3)
       '@typescript-eslint/types': 8.56.1
       '@typescript-eslint/visitor-keys': 8.56.1
+      debug: 4.4.3(supports-color@7.2.0)
+      minimatch: 10.2.6
+      semver: 7.8.5
+      tinyglobby: 0.2.17
+      ts-api-utils: 2.5.0(typescript@5.9.3)
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - supports-color
+
+  '@typescript-eslint/typescript-estree@8.71.1(supports-color@7.2.0)(typescript@5.9.3)':
+    dependencies:
+      '@typescript-eslint/project-service': 8.71.1(supports-color@7.2.0)(typescript@5.9.3)
+      '@typescript-eslint/tsconfig-utils': 8.71.1(typescript@5.9.3)
+      '@typescript-eslint/types': 8.71.1
+      '@typescript-eslint/visitor-keys': 8.71.1
       debug: 4.4.3(supports-color@7.2.0)
       minimatch: 10.2.6
       semver: 7.8.5
@@ -8280,7 +8321,7 @@ snapshots:
 
   ufo@1.6.4: {}
 
-  ultracite@7.12.4(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10):
+  ultracite@8.0.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(oxfmt@0.72.0)(oxlint@1.87.0)(prettier@3.9.10):
     dependencies:
       '@clack/prompts': 1.8.1
       cli-truncate: 6.1.1
