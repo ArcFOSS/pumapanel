@@ -8,13 +8,13 @@
     "./oxfmt": "./oxfmt.config.mjs"
   },
   "dependencies": {
-    "@shadcn/lint": "^0.2.0",
+    "@shadcn/lint": "^0.2.3",
     "eslint-plugin-github": "6.1.2",
     "eslint-plugin-sonarjs": "^4.2.2",
     "eslint-plugin-tsdoc": "^0.5.4",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
-    "oxlint-plugin-react-doctor": "^0.9.17",
+    "oxlint-plugin-react-doctor": "^0.9.18",
     "ultracite": "^7.12.4"
   }
 }
