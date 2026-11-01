@@ -7,7 +7,7 @@
 # runtime image ships only the traced server bundle and its dependencies.
 
 # --- Dependencies + build ----------------------------------------------------
-FROM node:26.11.1-bookworm-slim AS builder
+FROM node:26.13.0-bookworm-slim AS builder
 
 ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
@@ -36,7 +36,7 @@ COPY . .
 RUN pnpm --filter web build
 
 # --- Runtime -----------------------------------------------------------------
-FROM node:26.11.1-bookworm-slim AS runner
+FROM node:26.13.0-bookworm-slim AS runner
 
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
